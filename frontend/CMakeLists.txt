@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.20)
 project(frontend CXX)
 
 include(CheckIncludeFileCXX)
@@ -18,6 +18,8 @@ endif ()
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
+add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 
 add_executable(${PROJECT_NAME} main.cc)
 
@@ -29,7 +31,8 @@ add_executable(${PROJECT_NAME} main.cc)
 #
 # and comment out the following lines
 find_package(Drogon CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} PRIVATE Drogon::Drogon)
+find_package(libsodium CONFIG REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE Drogon::Drogon libsodium::libsodium)
 
 # ##############################################################################
 
@@ -41,20 +44,22 @@ else ()
     message(STATUS "use c++20")
 endif ()
 
+aux_source_directory(data DATA_SRC)
 aux_source_directory(controllers CTL_SRC)
 aux_source_directory(filters FILTER_SRC)
 aux_source_directory(plugins PLUGIN_SRC)
 aux_source_directory(models MODEL_SRC)
 
 drogon_create_views(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/views
-                    ${CMAKE_CURRENT_BINARY_DIR})
-# use the following line to create views with namespaces.
-# drogon_create_views(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/views
-#                     ${CMAKE_CURRENT_BINARY_DIR} TRUE)
-# use the following line to create views with namespace CHANGE_ME prefixed
-# and path namespaces.
-# drogon_create_views(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/views
-#                     ${CMAKE_CURRENT_BINARY_DIR} TRUE CHANGE_ME)
+                    ${CMAKE_CURRENT_BINARY_DIR} TRUE)
+
+file(COPY_FILE ${CMAKE_CURRENT_SOURCE_DIR}/config.json ${CMAKE_CURRENT_BINARY_DIR}/config.json ONLY_IF_DIFFERENT)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/.ssl/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/.ssl/)
+add_custom_command(
+        TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+                ${CMAKE_CURRENT_SOURCE_DIR}/static/
+                ${CMAKE_CURRENT_BINARY_DIR}/static/)
 
 target_include_directories(${PROJECT_NAME}
                            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
@@ -62,6 +67,7 @@ target_include_directories(${PROJECT_NAME}
 target_sources(${PROJECT_NAME}
                PRIVATE
                ${SRC_DIR}
+               ${DATA_SRC}
                ${CTL_SRC}
                ${FILTER_SRC}
                ${PLUGIN_SRC}

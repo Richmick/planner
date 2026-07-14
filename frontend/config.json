@@ -12,6 +12,18 @@
 			"https": true,
 		}
 	],
+	"db_clients":
+	[
+		{
+			"name": "default",
+			"rdbms": "sqlite3",
+			"filename":"./users.sqlite",
+			"dbname": "users",
+			"client_encoding": "",
+			"number_of_connections": 1,
+			"timeout": -1.0,
+		}
+	],
 	"app":
 	{
 		"number_of_threads": 2,
@@ -34,7 +46,8 @@
 			"css",
 			"ico",
 			"webp",
-			"svg"
+			"svg",
+			"html",
 		],
 		"max_connections": 100000,
 		"max_connections_per_ip": 0,

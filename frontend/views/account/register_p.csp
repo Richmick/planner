@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<%c++
+	auto err = @@.get< std::string >("error");
+	auto sessid = @@.get< std::string >("sessid");
+%>
+
+<head>
+	<meta charset="UTF-8">
+	<link rel="stylesheet" href="account.css">
+	<title>Планер дня</title>
+</head>
+<body>
+	<h2>Вход в аккаунт</h2>
+	<form action="/account/register" method="POST">
+		<input type="hidden" name="sessid" id="sessid" value= <%c++   $$ << '"' << sessid << '"';   %> >
+
+		<label for="user-login">Логин:</label>
+		<input type="text" id="user-login" name="login" placeholder="Введите логин" autocomplete="nickname" required />
+		<label for="user-email">Пароль:</label>
+		<input id="user-email" type="text" name="email" minlength="8" placeholder="Введите email" autocomplete="email" required />
+
+		<label for="user-password">Пароль:</label>
+		<input id="user-password" type="password" name="password" minlength="8" placeholder="Введите пароль" autocomplete="current-password" required />
+		<label for="user-password-confirm">Повторите пароль:</label>
+		<input id="user-password-confirm" type="password" name="password-confirm" minlength="8" placeholder="Повторите пароль" autocomplete="current-password" required />
+		<button type="submit">Зарегистрироваться</button>
+	</form>
+	<%c++   if (!err.empty()){   %>
+		<div class="feedback error">
+			<%c++   $$ << err;   %>
+		</div>
+	<%c++   }   %>
+	<div class="links">
+		<a href="/account/login">Уже есть аккаунт? Войти</a>
+	</div>
+</body>
+
+</html>

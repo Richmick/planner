@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<%c++
+	auto err = @@.get< std::string >("error");
+	auto sessid = @@.get< std::string >("sessid");
+%>
+
+<head>
+	<meta charset="UTF-8">
+	<link rel="stylesheet" href="/common.css">
+	<title>Планер дня</title>
+</head>
+<body>
+	<header>
+		<div>
+		<%c++   if (sessid.empty()) {   %>
+			<a href="/account/login" class="login">Войти</a>;
+		<%c++   } else {   %>
+			<form action="/account/logout" method="POST">
+				<input type="hidden" name="sessid" id="sessid" value= <%c++   $$ << '"' << sessid << '"';   %> >
+				<button type="submit" class="login">Выйти</button>
+			</form>
+		<%c++   }   %>
+		</div>
+	</header>
+	<main>
+		<%c++   if (!err.empty()){   %>
+			<div class="static_error">
+				<%c++   $$ << err;   %>
+			</div>
+		<%c++   }   %>
+
+		[[]]
+	</main>
+</body>
+
+</html>
