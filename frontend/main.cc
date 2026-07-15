@@ -1,5 +1,6 @@
 ﻿#include <drogon/drogon.h>
 #include <data/user.h>
+#include <data/net.h>
 
 using callback_t = std::function< void(const drogon::HttpResponsePtr&) >;
 
@@ -24,10 +25,6 @@ drogon::Task<> test_handler(drogon::HttpRequestPtr request, callback_t callback)
 			response->setBody(err.base().what());
 			callback(response);
 		}
-		/*auto config = drogon::app().getCustomConfig();
-		auto response = drogon::HttpResponse::newHttpJsonResponse(config);
-		response->addHeader("user", std::to_string(user->id));
-		callback(response);*/
 	}
 	else
 	{
@@ -46,6 +43,7 @@ int main() {
 		return 1;
 	}
 	drogon::app().loadConfigFile("./config.json");
+	innerplane::init_services();
 	drogon::app().registerHandler("/test", &test_handler, {drogon::Get});
 	drogon::app().run();
 	return 0;

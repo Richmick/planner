@@ -15,7 +15,7 @@
 	<header>
 		<div>
 		<%c++   if (sessid.empty()) {   %>
-			<a href="/account/login" class="login">Войти</a>;
+			<a href="/account/login" class="login">Войти</a>
 		<%c++   } else {   %>
 			<form action="/account/logout" method="POST">
 				<input type="hidden" name="sessid" id="sessid" value= <%c++   $$ << '"' << sessid << '"';   %> >
