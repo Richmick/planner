@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+﻿cmake_minimum_required(VERSION 3.5)
 project(calendar CXX)
 
 include(CheckIncludeFileCXX)
@@ -44,6 +44,7 @@ endif ()
 aux_source_directory(controllers CTL_SRC)
 aux_source_directory(filters FILTER_SRC)
 aux_source_directory(plugins PLUGIN_SRC)
+aux_source_directory(models MODEL_SRC)
 
 file(COPY_FILE ${CMAKE_CURRENT_SOURCE_DIR}/config.json ${CMAKE_CURRENT_BINARY_DIR}/config.json ONLY_IF_DIFFERENT)
 
@@ -55,7 +56,8 @@ target_sources(${PROJECT_NAME}
                ${SRC_DIR}
                ${CTL_SRC}
                ${FILTER_SRC}
-               ${PLUGIN_SRC})
+               ${PLUGIN_SRC}
+               ${MODEL_SRC})
 # ##############################################################################
 # uncomment the following line for dynamically loading views 
 # set_property(TARGET ${PROJECT_NAME} PROPERTY ENABLE_EXPORTS ON)

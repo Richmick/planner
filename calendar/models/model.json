@@ -1,0 +1,59 @@
+{
+	"rdbms": "sqlite3",
+	"filename":"./calendar.sqlite",
+	"dbname": "calendar",
+	"client_encoding": "",
+	"tables": [],
+	"convert":
+	{
+		"enabled": false,
+		"items":
+		[
+			{
+				"table": "user",
+				"column": "password",
+				"method":
+				{
+					// signature: void([const] std::shared_ptr [&])
+					"after_db_read": "decrypt_password",
+					// signature: void([const] std::shared_ptr [&])
+					"before_db_write": "encrypt_password"
+				},
+				"includes": [
+					"\"file_local_search_path.h\"","<file_in_global_search_path.h>"
+				]
+			}
+		]
+	},
+	"relationships":
+	{
+		"enabled": false,
+		"items":
+		[
+			{
+				"type": "has one",
+				"original_table_name": "sources",
+				"original_table_alias": "source",
+				"original_key": "id",
+				"target_table_name": "events",
+				"target_table_alias": "event",
+				"target_key": "source_id",
+				"enable_reverse": true
+			}
+		]
+	},
+	"restful_api_controllers":
+	{
+		"enabled": true,
+		"resource_uri": "/api/*",
+		"class_name": "api::restful::*_ctrl",
+		"filters": [],
+		"db_client":
+		{
+			"name": "default",
+			"is_fast": false
+		},
+		"directory": "controllers",
+		"generate_base_only": true
+	}
+}
