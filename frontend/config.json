@@ -101,5 +101,16 @@
 			}
 		}
 	],
-	"custom_config": {}
+	"custom_config":
+	{
+		"net":
+		{
+			"calendar":
+			{
+				"address": "http://localhost:7700",
+				"same_client_to_same_backend": true,
+				"connection_factor": 1
+			}
+		}
+	}
 }

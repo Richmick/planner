@@ -1,9 +1,9 @@
-{
+﻿{
 	"listeners":
 	[
 		{
 			"address": "0.0.0.0",
-			"port": 5700,
+			"port": 5700
 		}
 	],
 	"db_clients":
@@ -15,7 +15,7 @@
 			"dbname": "calendar",
 			"client_encoding": "",
 			"number_of_connections": 1,
-			"timeout": -1.0,
+			"timeout": -1.0
 		}
 	],
 	"app":
@@ -49,23 +49,8 @@
 		"client_max_websocket_message_size": "128K",
 		"reuse_port": false,
 		"enabled_compressed_request": false,
-		"enable_request_stream": false,
+		"enable_request_stream": false
 	},
-	"plugins":
-	[
-		{
-			"name": "drogon::plugin::AccessLogger",
-			"dependencies": [],
-			"config": {
-				"use_spdlog": false,
-				"log_path": "",
-				"log_format": "",
-				"log_file": "access.log",
-				"log_size_limit": 0,
-				"use_local_time": true,
-				"log_index": 0,
-			}
-		}
-	],
+	"plugins": [],
 	"custom_config": {}
 }
