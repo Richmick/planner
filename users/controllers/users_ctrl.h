@@ -32,7 +32,6 @@ namespace api::restful
 
 		//bool subscribes_converter(const Json::Value& request, std::string& err);
 	private:
-		void send_400(drogon::AdviceCallback&& callback, std::string errcode, std::string errmsg);
 		static long long now();
 	};
 }

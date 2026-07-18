@@ -4,14 +4,13 @@
 
 namespace api
 {
-	void send_400(drogon::AdviceCallback&& callback, std::string errcode, std::string errmsg)
-	{
-		Json::Value json, err;
-		err["code"] = errcode;
-		err["msg"] = errmsg;
-		json["error"] = std::move(err);
-		auto response = drogon::HttpResponse::newHttpJsonResponse(std::move(json));
-		response->setStatusCode(drogon::HttpStatusCode::k400BadRequest);
-		callback(response);
-	}
+	void send_error(drogon::AdviceCallback&& callback, drogon::HttpStatusCode code,
+				Json::StaticString errcode, Json::StaticString errmsg);
+	void send_400(drogon::AdviceCallback&& callback,
+				Json::StaticString errcode, Json::StaticString errmsg);
+
+	void send_error(drogon::AdviceCallback&& callback, drogon::HttpStatusCode code,
+				const std::string& errcode, const std::string& errmsg);
+	void send_400(drogon::AdviceCallback&& callback,
+				const std::string& errcode, const std::string& errmsg);
 }

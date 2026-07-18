@@ -2,17 +2,8 @@
 
 #include <string>
 #include <sodium.h>
+#include <http_utils.h>
 
-void api::restful::users_ctrl::send_400(drogon::AdviceCallback&& callback, std::string errcode, std::string errmsg)
-{
-	Json::Value json, err;
-	err["code"] = errcode;
-	err["msg"] = errmsg;
-	json["error"] = std::move(err);
-	auto response = drogon::HttpResponse::newHttpJsonResponse(std::move(json));
-	response->setStatusCode(drogon::HttpStatusCode::k400BadRequest);
-	callback(response);
-}
 long long api::restful::users_ctrl::now()
 {
 	auto stamp = std::chrono::system_clock::now().time_since_epoch();
@@ -46,6 +37,11 @@ void api::restful::users_ctrl::create(const drogon::HttpRequestPtr& req, drogon:
 	if (!json || !json->isObject())
 	{
 		send_400(std::move(callback), "NOT_JSON", "expected json object");
+		return;
+	}
+	if (json->get("password", "").asString().length() < 8)
+	{
+		send_400(std::move(callback), "TOO_SHORT_PW", "password must be at least 8 chars length");
 		return;
 	}
 	drogon::orm::DbClientPtr sql_client = drogon::app().getDbClient();
