@@ -1,0 +1,17 @@
+[requires]
+jsoncpp/1.9.4
+zlib/1.2.11
+gtest/1.10.0
+sqlite3/3.40.1
+#libpq/13.2
+openssl/4.0.1
+hiredis/1.0.0
+brotli/1.0.9
+libsodium/1.0.22
+
+[generators]
+CMakeToolchain
+
+[options]
+
+[imports]
