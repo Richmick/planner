@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+﻿cmake_minimum_required(VERSION 3.5)
 project(users CXX)
 
 include(CheckIncludeFileCXX)
@@ -22,7 +22,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_executable(${PROJECT_NAME} main.cc)
 
 find_package(Drogon CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} PRIVATE Drogon::Drogon)
+find_package(libsodium CONFIG REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE Drogon::Drogon libsodium::libsodium)
 
 
 if (CMAKE_CXX_STANDARD LESS 17)
@@ -37,6 +38,11 @@ aux_source_directory(controllers CTL_SRC)
 aux_source_directory(filters FILTER_SRC)
 aux_source_directory(plugins PLUGIN_SRC)
 aux_source_directory(models MODEL_SRC)
+
+if ((NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/users.sqlite)
+        OR (${CMAKE_CURRENT_SOURCE_DIR}/users.sqlite IS_NEWER_THAN ${CMAKE_CURRENT_BINARY_DIR}/users.sqlite))
+    file(COPY_FILE ${CMAKE_CURRENT_SOURCE_DIR}/users.sqlite ${CMAKE_CURRENT_BINARY_DIR}/users.sqlite)
+endif()
 
 target_include_directories(${PROJECT_NAME}
                            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
