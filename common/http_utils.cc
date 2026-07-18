@@ -1,5 +1,15 @@
 ﻿#include "http_utils.h"
 
+void api::send_code_only(drogon::AdviceCallback&& callback, drogon::HttpStatusCode code)
+{
+	auto response = drogon::HttpResponse::newHttpResponse();
+	response->setStatusCode(code);
+	callback(response);
+}
+void api::send_success(drogon::AdviceCallback&& callback)
+{
+	send_code_only(std::move(callback), drogon::HttpStatusCode::k204NoContent);
+}
 void api::send_error(drogon::AdviceCallback&& callback, drogon::HttpStatusCode code,
 			Json::StaticString errcode, Json::StaticString errmsg)
 {

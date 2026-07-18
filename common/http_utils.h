@@ -4,6 +4,9 @@
 
 namespace api
 {
+	void send_code_only(drogon::AdviceCallback&& callback, drogon::HttpStatusCode code);
+	void send_success(drogon::AdviceCallback&& callback);
+
 	void send_error(drogon::AdviceCallback&& callback, drogon::HttpStatusCode code,
 				Json::StaticString errcode, Json::StaticString errmsg);
 	void send_400(drogon::AdviceCallback&& callback,

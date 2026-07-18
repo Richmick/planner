@@ -17,6 +17,7 @@ namespace account
 
 			ADD_METHOD_TO(controller::pass_self, "/api/users/{:id}", drogon::Get, drogon::Put,
 						drogon::Options, "api::logged_mw");
+			ADD_METHOD_TO(controller::pass_self, "/api/users/{:id}", drogon::Delete, "api::admin_mw");
 			ADD_METHOD_TO(controller::pass, "/api/users", drogon::Get, "api::admin_mw");
 			ADD_METHOD_TO(controller::pass_login, "/api/users", drogon::Post, drogon::Options);
 			ADD_METHOD_TO(controller::pass_login, "/api/login", drogon::Post, drogon::Options);
