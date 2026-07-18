@@ -2,7 +2,8 @@
 
 #include <data/user.h>
 
-void personal::calendar::page(const drogon::HttpRequestPtr& request, callback_t&& callback, std::size_t id)
+void personal::calendar::page(const drogon::HttpRequestPtr& request, drogon::AdviceCallback&& callback,
+			std::size_t id)
 {
 	auto user = request->session()->getOptional< data::user_t >("user");
 	drogon::HttpViewData data;
@@ -12,7 +13,7 @@ void personal::calendar::page(const drogon::HttpRequestPtr& request, callback_t&
 		data.insert("sessid", request->session()->sessionId());
 		if (user->id != id)
 		{
-			data.insertAsString("error", "Нет доступа к календарю данного пользователя");
+			data.insertAsString("error", "Нет доступа к запрошенному календарю");
 			data.insertAsString("calendar_name", "Календарь #" + std::to_string(id));
 		}
 		else
@@ -22,6 +23,7 @@ void personal::calendar::page(const drogon::HttpRequestPtr& request, callback_t&
 	}
 	else
 	{
+		data.insertAsString("error", "Необходима авторизация");
 		data.insertAsString("calendar_name", "Календарь #" + std::to_string(id));
 	}
 
@@ -30,9 +32,13 @@ void personal::calendar::page(const drogon::HttpRequestPtr& request, callback_t&
 	{
 		response->setStatusCode(drogon::HttpStatusCode::k401Unauthorized);
 	}
+	else if (user->id != id)
+	{
+		response->setStatusCode(drogon::HttpStatusCode::k403Forbidden);
+	}
 	callback(response);
 }
-void personal::calendar::index(const drogon::HttpRequestPtr& request, callback_t&& callback)
+void personal::calendar::index(const drogon::HttpRequestPtr& request, drogon::AdviceCallback&& callback)
 {
 	auto user = request->session()->getOptional< data::user_t >("user");
 	drogon::HttpViewData data;

@@ -1,5 +1,6 @@
 ﻿#include "account_controller.h"
 
+#include <http_utils.h>
 #include <data/user.h>
 #include <data/net.h>
 
@@ -19,6 +20,34 @@ namespace account
 		return id;
 	}
 }
+drogon::Task<> account::controller::pass_login(drogon::HttpRequestPtr request, drogon::AdviceCallback callback)
+{
+	drogon::HttpClientPtr user_service = innerplane::users.get(request);
+	request->setPassThrough(true);
+	drogon::HttpResponsePtr response = co_await user_service->sendRequestCoro(request);
+	std::size_t user_id;
+	parse_user(request->session(), response, user_id);
+	callback(response);
+}
+drogon::Task<> account::controller::pass(drogon::HttpRequestPtr request, drogon::AdviceCallback callback)
+{
+	drogon::HttpClientPtr user_service = innerplane::users.get(request);
+	request->setPassThrough(true);
+	callback(co_await user_service->sendRequestCoro(request));
+}
+drogon::Task<> account::controller::pass_self(drogon::HttpRequestPtr request, drogon::AdviceCallback callback,
+			std::size_t target_id)
+{
+	drogon::HttpClientPtr user_service = innerplane::users.get(request);
+	auto user = request->session()->get< data::user_t >("user");
+	if (!user.is_admin && (user.id != target_id))
+	{
+		api::send_error(std::move(callback), drogon::k403Forbidden, "NOT_ADMIN", "requires admin");
+		co_return;
+	}
+	request->setPassThrough(true);
+	callback(co_await user_service->sendRequestCoro(request));
+}
 
 account::controller::error account::controller::parse_user(const drogon::SessionPtr& session,
 			const drogon::HttpResponsePtr& response, std::size_t& user_id)
@@ -28,6 +57,7 @@ account::controller::error account::controller::parse_user(const drogon::Session
 	if (!json) return error::INTERNAL;
 	if ((response->getStatusCode() >= 200) && (response->getStatusCode() < 300))
 	{
+		if (!json->isMember("id") || !json->isMember("nickname")) return error::INTERNAL;
 		user_id = use_user(session, *json);
 		return error::none;
 	}
@@ -42,7 +72,7 @@ account::controller::error account::controller::parse_user(const drogon::Session
 	return error::INTERNAL;
 }
 
-drogon::Task<> account::controller::register_user(drogon::HttpRequestPtr request, callback_t callback)
+drogon::Task<> account::controller::register_user(drogon::HttpRequestPtr request, drogon::AdviceCallback callback)
 {
 	std::string login = request->getParameter("login");
 	std::string email = request->getParameter("email");
@@ -88,7 +118,7 @@ drogon::Task<> account::controller::register_user(drogon::HttpRequestPtr request
 	}
 	callback(gen_register_page(request->session(), err));
 }
-void account::controller::register_page(const drogon::HttpRequestPtr& request, callback_t&& callback)
+void account::controller::register_page(const drogon::HttpRequestPtr& request, drogon::AdviceCallback&& callback)
 {
 	auto user = request->session()->getOptional< data::user_t >("user");
 	if (user)
@@ -142,7 +172,7 @@ drogon::HttpResponsePtr account::controller::gen_register_page(const drogon::Ses
 	return response;
 }
 
-drogon::Task<> account::controller::login(drogon::HttpRequestPtr request, callback_t callback)
+drogon::Task<> account::controller::login(drogon::HttpRequestPtr request, drogon::AdviceCallback callback)
 {
 	std::string login = request->getParameter("login");
 	std::string password = request->getParameter("password");
@@ -174,7 +204,7 @@ drogon::Task<> account::controller::login(drogon::HttpRequestPtr request, callba
 	}
 	callback(gen_login_page(request->session(), err));
 }
-void account::controller::login_page(const drogon::HttpRequestPtr& request, callback_t&& callback)
+void account::controller::login_page(const drogon::HttpRequestPtr& request, drogon::AdviceCallback&& callback)
 {
 	auto user = request->session()->getOptional< data::user_t >("user");
 	if (user)
@@ -219,7 +249,7 @@ drogon::HttpResponsePtr account::controller::gen_login_page(const drogon::Sessio
 	return response;
 }
 
-void account::controller::logout(const drogon::HttpRequestPtr& request, callback_t&& callback)
+void account::controller::logout(const drogon::HttpRequestPtr& request, drogon::AdviceCallback&& callback)
 {
 	request->session()->erase("user");
 	callback(drogon::HttpResponse::newRedirectionResponse("/account/login"));
