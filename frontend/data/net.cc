@@ -1,6 +1,7 @@
 ﻿#include "net.h"
 
 innerplane::service innerplane::calendar;
+innerplane::service innerplane::users;
 
 void innerplane::init_services()
 {
@@ -11,10 +12,11 @@ void innerplane::init_services()
 		throw std::runtime_error("no network configuration");
 	}
 	Json::Value net = config.get("net", {});
-	if (!net.isMember("calendar"))
+	if (!net.isMember("calendar") || !net.isMember("users"))
 	{
 		LOG_ERROR << "no configuration for obligatory services";
 		throw std::runtime_error("missing obligatory service configs");
 	}
 	calendar.init(net.get("calendar", {}));
+	users.init(net.get("users", {}));
 }

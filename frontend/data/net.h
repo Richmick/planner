@@ -4,6 +4,6 @@
 
 namespace innerplane
 {
-	extern service calendar;
+	extern service calendar, users;
 	void init_services();
 }

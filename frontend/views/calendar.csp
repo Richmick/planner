@@ -1,3 +1,9 @@
 <%layout views/main_layout.csp %>
 
-<h1>Body</h1>
+<h1>Активные события</h1>
+<div id="calendar"></div>
+
+<button class="place_button">Распределить</button>
+<div id="free-events"></div>
+
+<script src="/calendar.js"></script>

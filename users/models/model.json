@@ -21,19 +21,5 @@
 				]
 			}
 		]
-	},
-	"restful_api_controllers":
-	{
-		"enabled": true,
-		"resource_uri": "/api/*",
-		"class_name": "api::restful::*_ctrl",
-		"filters": [],
-		"db_client":
-		{
-			"name": "default",
-			"is_fast": false
-		},
-		"directory": "controllers",
-		"generate_base_only": true
 	}
 }

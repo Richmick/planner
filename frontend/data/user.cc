@@ -1,4 +1,4 @@
-#include "user.h"
+﻿#include "user.h"
 
 #include <cctype>
 
@@ -45,31 +45,4 @@ namespace data
 		if ((enc >= 'A') && (enc <= 'F')) return enc - 'A' + 10;
 		return 0xFF;
 	}
-}
-
-void data::screen(unsigned char*res, const unsigned char* str, std::size_t str_len)
-{
-	for (std::size_t i = 0; i < str_len; i++)
-	{
-		res[i << 1] = screen((str[i] >> 4) & 0xF);
-		res[(i << 1) + 1] = screen(str[i] & 0xF);
-	}
-}
-bool data::descreen(unsigned char* res, const unsigned char* enc, std::size_t enc_len)
-{
-	if (enc == nullptr) return false;
-
-	if (enc_len & 0b1)
-	{
-		res[0] = descreen(enc[0]);
-		++res, ++enc, --enc_len;
-	}
-	enc_len >>= 1;
-	for (std::size_t i = 0; i < enc_len; i++)
-	{
-		unsigned char lhs = descreen(enc[i << 1]), rhs = descreen(enc[(i << 1) + 1]);
-		if ((lhs == 0xFF) || (rhs == 0xFF)) return false;
-		res[i] = (lhs << 4) | rhs;
-	}
-	return true;
 }

@@ -14,6 +14,15 @@ header div {
 	flex-wrap: nowrap;
 	min-height: 56px;
 }
+main {
+	margin: 0.5cm 1.5cm;
+}
+
+.calendar_name {
+	padding: 10px;
+	border: 1px solid;
+	border-radius: 6px;
+}
 
 .login {
 	display: inline-flex;
@@ -49,4 +58,28 @@ header div {
 	color: #8b1c1c;
 	border: 1px solid #f1b4b4;
 	background: #fff1f1;
+}
+
+.place_button {
+	padding: 10px;
+	border-radius: 10px;
+	border: solid 2px;
+}
+.calendar_page {
+	display: flex;
+	margin-bottom: 1cm;
+	margin-top: 0.5cm;
+}
+.calendar_time {
+	padding: 0px 15px;
+	vertical-align: top;
+	border-top: solid 1px;
+}
+.calendar_events {
+	border: solid 1px;
+	border-radius: 4px;
+	min-width: 300px;
+}
+.calendar_events td {
+	padding: 0px 30px;
 }

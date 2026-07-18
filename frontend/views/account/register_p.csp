@@ -8,13 +8,13 @@
 
 <head>
 	<meta charset="UTF-8">
-	<link rel="stylesheet" href="account.css">
+	<link rel="stylesheet" href="/account.css">
 	<title>Планер дня</title>
 </head>
 <body>
 	<h2>Вход в аккаунт</h2>
 	<form action="/account/register" method="POST">
-		<input type="hidden" name="sessid" id="sessid" value= <%c++   $$ << '"' << sessid << '"';   %> >
+		<input type="hidden" name="sessid" id="sessid" value="<%c++   $$ << sessid;   %>" >
 
 		<label for="user-login">Логин:</label>
 		<input type="text" id="user-login" name="login" placeholder="Введите логин" autocomplete="nickname" required />

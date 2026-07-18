@@ -2,6 +2,8 @@
 <html lang="ru">
 
 <%c++
+	auto calendar_id = @@.get< std::size_t >("calendar_id");
+	auto calendar_name = @@.get< std::string >("calendar_name");
 	auto err = @@.get< std::string >("error");
 	auto sessid = @@.get< std::string >("sessid");
 %>
@@ -14,11 +16,12 @@
 <body>
 	<header>
 		<div>
+		<p class="calendar_name"><%c++   $$ << calendar_name;   %></p>
 		<%c++   if (sessid.empty()) {   %>
 			<a href="/account/login" class="login">Войти</a>
 		<%c++   } else {   %>
 			<form action="/account/logout" method="POST">
-				<input type="hidden" name="sessid" id="sessid" value= <%c++   $$ << '"' << sessid << '"';   %> >
+				<input type="hidden" name="sessid" id="sessid" value="<%c++   $$ << sessid;   %>" >
 				<button type="submit" class="login">Выйти</button>
 			</form>
 		<%c++   }   %>

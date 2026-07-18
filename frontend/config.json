@@ -1,27 +1,15 @@
-{
+﻿{
 	"ssl":
 	{
-		"cert": "./.ssl/server.cert.pem",
-		"key": "./.ssl/server.key.pem",
+		"cert": "../.ssl/server.cert.pem",
+		"key": "../.ssl/server.key.pem"
 	},
 	"listeners":
 	[
 		{
 			"address": "0.0.0.0",
 			"port": 443,
-			"https": true,
-		}
-	],
-	"db_clients":
-	[
-		{
-			"name": "default",
-			"rdbms": "sqlite3",
-			"filename":"./users.sqlite",
-			"dbname": "users",
-			"client_encoding": "",
-			"number_of_connections": 1,
-			"timeout": -1.0,
+			"https": true
 		}
 	],
 	"app":
@@ -32,8 +20,7 @@
 		"session_same_site" : "Strict",
 		"session_cookie_key": "JSESSIONID",
 		"session_max_age": -1,
-		"document_root": "./static/",
-		"home_page": "index.html",
+		"document_root": "../static/",
 		"use_implicit_page": true,
 		"implicit_page": "index.html",
 		"upload_path": "./uploads",
@@ -47,7 +34,7 @@
 			"ico",
 			"webp",
 			"svg",
-			"html",
+			"html"
 		],
 		"max_connections": 100000,
 		"max_connections_per_ip": 0,
@@ -83,7 +70,7 @@
 		"client_max_websocket_message_size": "128K",
 		"reuse_port": false,
 		"enabled_compressed_request": false,
-		"enable_request_stream": false,
+		"enable_request_stream": false
 	},
 	"plugins":
 	[
@@ -97,7 +84,7 @@
 				"log_file": "access.log",
 				"log_size_limit": 0,
 				"use_local_time": true,
-				"log_index": 0,
+				"log_index": 0
 			}
 		}
 	],
@@ -105,9 +92,15 @@
 	{
 		"net":
 		{
+			"users":
+			{
+				"address": "http://127.0.0.1:5700",
+				"same_client_to_same_backend": true,
+				"connection_factor": 1
+			},
 			"calendar":
 			{
-				"address": "http://localhost:7700",
+				"address": "http://localhost:5701",
 				"same_client_to_same_backend": true,
 				"connection_factor": 1
 			}

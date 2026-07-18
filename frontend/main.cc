@@ -37,12 +37,7 @@ drogon::Task<> test_handler(drogon::HttpRequestPtr request, callback_t callback)
 }
 
 int main() {
-	if (sodium_init() < 0)
-	{
-		std::cerr << "failed to initialize crypto library\n";
-		return 1;
-	}
-	drogon::app().loadConfigFile("./config.json");
+	drogon::app().loadConfigFile("../config.json");
 	innerplane::init_services();
 	drogon::app().registerHandler("/test", &test_handler, {drogon::Get});
 	drogon::app().run();
