@@ -9,7 +9,7 @@ drogon_ctl create project <your_project_name>
 On Windows with Conan manager you need to create .sln project from cmake:
 ```shell
 cd build
-conan install <path-to-direectory-with-conanfile-txt> -s compiler="msvc" -s compiler.version=194  -s compiler.cppstd=23 -s build_type=Debug  --output-folder . --build=missing
+conan install .. -s compiler="msvc" -s compiler.version=194  -s compiler.cppstd=23 -s build_type=Debug  --output-folder . --build=missing
 cmake .. --preset conan-default -DCMAKE_TOOLCHAIN_FILE="conan_toolchain.cmake" -DCMAKE_PREFIX_PATH=<path-to-drogon-built-result>
 ```
 Then you can build your project with Visual Studio via sln and rerun cmake to update project
