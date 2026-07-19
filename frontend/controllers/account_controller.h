@@ -15,9 +15,12 @@ namespace account
 			ADD_METHOD_TO(controller::register_user, "/account/register", drogon::Post);
 			ADD_METHOD_TO(controller::logout, "/account/logout", drogon::Post);
 
+			ADD_METHOD_TO(controller::pass_self, "/api/users/{:id}/subscribe", drogon::Post,
+						drogon::Options, "api::logged_mw");
 			ADD_METHOD_TO(controller::pass_self, "/api/users/{:id}", drogon::Get, drogon::Put,
 						drogon::Options, "api::logged_mw");
 			ADD_METHOD_TO(controller::pass_self, "/api/users/{:id}", drogon::Delete, "api::admin_mw");
+
 			ADD_METHOD_TO(controller::pass, "/api/users", drogon::Get, "api::admin_mw");
 			ADD_METHOD_TO(controller::pass_login, "/api/users", drogon::Post, drogon::Options);
 			ADD_METHOD_TO(controller::pass_login, "/api/login", drogon::Post, drogon::Options);
@@ -33,6 +36,7 @@ namespace account
 		drogon::Task<> pass_login(drogon::HttpRequestPtr request, drogon::AdviceCallback callback);
 		drogon::Task<> pass_self(drogon::HttpRequestPtr request, drogon::AdviceCallback callback,
 					std::size_t target_id);
+
 	private:
 		enum class error
 		{

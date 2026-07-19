@@ -57,5 +57,3 @@ target_sources(${PROJECT_NAME}
                ${PLUGIN_SRC}
                ${MODEL_SRC}
                ${COMMON_SRC})
-
-add_subdirectory(test)

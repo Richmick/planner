@@ -11,7 +11,7 @@ long long api::restful::users_ctrl::now()
 	return stamp_seconds.count();
 }
 
-void api::restful::users_ctrl::getOne(const drogon::HttpRequestPtr& req,
+void api::restful::users_ctrl::get_one(const drogon::HttpRequestPtr& req,
 			drogon::AdviceCallback&& callback, Users::PrimaryKeyType&& id)
 {
 	drogon::orm::DbClientPtr sql_client = drogon::app().getDbClient();
@@ -19,7 +19,10 @@ void api::restful::users_ctrl::getOne(const drogon::HttpRequestPtr& req,
 	try
 	{
 		Users user = mapper.findByPrimaryKey(id);
+		Json::Value subscribes = prepare_array(user.getSubscribes());
+		user.setSubscribesToNull();
 		Json::Value json = user.toJson();
+		json[Users::Cols::_subscribes] = std::move(subscribes);
 		json.removeMember(Users::Cols::_password);
 		callback(drogon::HttpResponse::newHttpJsonResponse(json));
 	}
@@ -30,7 +33,7 @@ void api::restful::users_ctrl::getOne(const drogon::HttpRequestPtr& req,
 		callback(response);
 	}
 }
-void api::restful::users_ctrl::updateOne(const drogon::HttpRequestPtr& req,
+void api::restful::users_ctrl::update_one(const drogon::HttpRequestPtr& req,
 			drogon::AdviceCallback&& callback, Users::PrimaryKeyType&& id)
 {
 	const auto& json = req->getJsonObject();
@@ -74,11 +77,13 @@ void api::restful::users_ctrl::updateOne(const drogon::HttpRequestPtr& req,
 			return;
 		}
 	}
-	json->removeMember(Users::Cols::_id);
-	json->removeMember(Users::Cols::_last_activity);
 
+	json->removeMember(Users::Cols::_id);
+	json->removeMember(Users::Cols::_subscribes);
+	json->removeMember(Users::Cols::_last_activity);
 	Users user{*json};
 	user.setId(id);
+
 	try
 	{
 		std::size_t affected = mapper.update(user);
@@ -92,7 +97,7 @@ void api::restful::users_ctrl::updateOne(const drogon::HttpRequestPtr& req,
 		send_400(std::move(callback), "NOT_UNIQUE", "not unique");
 	}
 }
-void api::restful::users_ctrl::deleteOne(const drogon::HttpRequestPtr& req,
+void api::restful::users_ctrl::delete_one(const drogon::HttpRequestPtr& req,
 			drogon::AdviceCallback&& callback, Users::PrimaryKeyType&& id)
 {
 	drogon::orm::DbClientPtr sql_client = drogon::app().getDbClient();
@@ -104,6 +109,28 @@ void api::restful::users_ctrl::deleteOne(const drogon::HttpRequestPtr& req,
 		send_success(std::move(callback));
 }
 
+void api::restful::users_ctrl::subscribe(const drogon::HttpRequestPtr& req,
+			drogon::AdviceCallback&& callback, Users::PrimaryKeyType&& id)
+{
+	const auto& json = req->getJsonObject();
+	if (!json || !json->isArray())
+	{
+		send_400(std::move(callback), "NOT_JSON", "expected json array");
+		return;
+	}
+	drogon::orm::DbClientPtr sql_client = drogon::app().getDbClient();
+	drogon::orm::Mapper< Users > mapper(sql_client);
+
+	Users user;
+	user.setId(id);
+	user.setSubscribes(parse_array(*json));
+
+	std::size_t affected = mapper.update(user);
+	if (affected == 0)
+		send_error(std::move(callback), drogon::k404NotFound, "NOT_EXISTS", "unknown user");
+	else
+		send_code_only(std::move(callback), drogon::k202Accepted);
+}
 void api::restful::users_ctrl::create(const drogon::HttpRequestPtr& req, drogon::AdviceCallback&& callback)
 {
 	const auto& json = req->getJsonObject();
@@ -119,16 +146,19 @@ void api::restful::users_ctrl::create(const drogon::HttpRequestPtr& req, drogon:
 	}
 	drogon::orm::DbClientPtr sql_client = drogon::app().getDbClient();
 	drogon::orm::Mapper< Users > mapper(sql_client);
+
+	json->removeMember(Users::Cols::_id);
+	json->removeMember(Users::Cols::_subscribes);
+	json->removeMember(Users::Cols::_last_activity);
 	Users user{*json};
 	user.setLastActivity(now());
+
 	try
 	{
 		mapper.insert(user);
 		Json::Value json = user.toJson();
 		json.removeMember(Users::Cols::_password);
-		auto response = drogon::HttpResponse::newHttpJsonResponse(json);
-		response->setStatusCode(drogon::HttpStatusCode::k201Created);
-		callback(response);
+		callback(api::new_json_response(std::move(json), drogon::k201Created));
 	}
 	catch (const drogon::orm::UniqueViolation&)
 	{
@@ -163,19 +193,12 @@ void api::restful::users_ctrl::login(const drogon::HttpRequestPtr& request, drog
 			user.setLastActivity(now());
 			mapper.update(user);
 
+			Json::Value subscribes = prepare_array(user.getSubscribes());
+			user.setSubscribesToNull();
 			Json::Value result = user.toJson();
+			result[Users::Cols::_subscribes] = std::move(subscribes);
 			result.removeMember(Users::Cols::_password);
-			auto subscribes = user.getSubscribes();
-			if (subscribes)
-			{
-				Json::Value arr{Json::arrayValue};
-				std::size_t* p = reinterpret_cast< std::size_t* >(subscribes->data());
-				std::size_t* end = reinterpret_cast< std::size_t* >(subscribes->data())
-						+ (subscribes->size() / sizeof std::size_t);
-				for (; p < end; p++) arr.append(*p);
-				result[Users::Cols::_subscribes] = std::move(arr);
-			}
-			callback(drogon::HttpResponse::newHttpJsonResponse(result));
+			callback(drogon::HttpResponse::newHttpJsonResponse(std::move(result)));
 			return;
 		}
 	}

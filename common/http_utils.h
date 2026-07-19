@@ -16,4 +16,10 @@ namespace api
 				const std::string& errcode, const std::string& errmsg);
 	void send_400(drogon::AdviceCallback&& callback,
 				const std::string& errcode, const std::string& errmsg);
+
+	Json::Value prepare_array(const std::shared_ptr< std::vector< char > >& arr);
+	std::string parse_array(const Json::Value& arr);
+
+	drogon::HttpResponsePtr new_json_response(const Json::Value& json, drogon::HttpStatusCode code = drogon::k200OK);
+	drogon::HttpResponsePtr new_json_response(Json::Value&& json, drogon::HttpStatusCode code = drogon::k200OK);
 }
