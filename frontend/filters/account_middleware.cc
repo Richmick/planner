@@ -11,7 +11,7 @@ void api::logged_mw::invoke(const drogon::HttpRequestPtr& request,
 	auto user = request->session()->getOptional< data::user_t >("user");
 	if (!user)
 	{
-		api::send_error(std::move(up_callback), drogon::k401Unauthorized, "UNAUTHORIZED", "please do login");
+		up_callback(api::response::new_error(drogon::k401Unauthorized, "UNAUTHORIZED"_s, "please do login"_s));
 		return;
 	}
 	next_callback(std::move(up_callback));
@@ -22,12 +22,12 @@ void api::admin_mw::invoke(const drogon::HttpRequestPtr& request,
 	auto user = request->session()->getOptional< data::user_t >("user");
 	if (!user)
 	{
-		api::send_error(std::move(up_callback), drogon::k401Unauthorized, "UNAUTHORIZED", "please do login");
+		up_callback(api::response::new_error(drogon::k401Unauthorized, "UNAUTHORIZED"_s, "please do login"_s));
 		return;
 	}
 	if (!user->is_admin)
 	{
-		api::send_error(std::move(up_callback), drogon::k403Forbidden, "NOT_ADMIN", "requires admin");
+		up_callback(api::response::new_error(drogon::k403Forbidden, "NOT_ADMIN"_s, "requires admin"_s));
 		return;
 	}
 	next_callback(std::move(up_callback));

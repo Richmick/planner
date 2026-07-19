@@ -4,6 +4,9 @@
 #include <sodium.h>
 #include <http_utils.h>
 
+using namespace api::response;
+using api::operator""_s;
+
 long long api::restful::users_ctrl::now()
 {
 	auto stamp = std::chrono::system_clock::now().time_since_epoch();
@@ -39,8 +42,7 @@ void api::restful::users_ctrl::update_one(const drogon::HttpRequestPtr& req,
 	const auto& json = req->getJsonObject();
 	if (!json || !json->isObject())
 	{
-		send_400(std::move(callback), "NOT_JSON", "expected json object");
-		return;
+		return callback(new_400("NOT_JSON"_s, "expected json object"_s));
 	}
 	drogon::orm::DbClientPtr sql_client = drogon::app().getDbClient();
 	drogon::orm::Mapper< Users > mapper(sql_client);
@@ -50,16 +52,10 @@ void api::restful::users_ctrl::update_one(const drogon::HttpRequestPtr& req,
 	{
 		Json::String password_str = password->asString();
 		if (!json->isMember("previous_password"))
-		{
-			send_400(std::move(callback), "MISSING_OBLIGATORY", "missing previous password");
-			return;
-		}
+			return callback(new_400("MISSING_OBLIGATORY"_s, "missing previous password"_s));
 		Json::String prev_pw = json->get("previous_password", "").asString();
 		if ((prev_pw.length() < 8) || (password_str.length() < 8))
-		{
-			send_400(std::move(callback), "TOO_SHORT_PW", "password must be at least 8 chars length");
-			return;
-		}
+			return callback(new_400("TOO_SHORT_PW"_s, "password must be at least 8 chars length"_s));
 		try
 		{
 			Users user = mapper.findByPrimaryKey(id);
@@ -67,14 +63,12 @@ void api::restful::users_ctrl::update_one(const drogon::HttpRequestPtr& req,
 						!user_password || crypto_pwhash_str_verify(user_password->c_str(),
 							prev_pw.c_str(), prev_pw.length()) != 0)
 			{
-				send_400(std::move(callback), "FAILED", "wrong login or password");
-				return;
+				return callback(new_400("FAILED"_s, "wrong login or password"_s));
 			}
 		}
 		catch (const drogon::orm::UnexpectedRows&)
 		{
-			send_400(std::move(callback), "FAILED", "wrong login or password");
-			return;
+			return callback(new_400("FAILED"_s, "wrong login or password"_s));
 		}
 	}
 
@@ -88,13 +82,13 @@ void api::restful::users_ctrl::update_one(const drogon::HttpRequestPtr& req,
 	{
 		std::size_t affected = mapper.update(user);
 		if (affected == 0)
-			send_error(std::move(callback), drogon::k404NotFound, "NOT_EXISTS", "unknown user");
+			return callback(new_error(drogon::k404NotFound, "NOT_EXISTS"_s, "unknown user"_s));
 		else
-			send_code_only(std::move(callback), drogon::k202Accepted);
+			return callback(new_response(drogon::k202Accepted));
 	}
 	catch (const drogon::orm::UniqueViolation&)
 	{
-		send_400(std::move(callback), "NOT_UNIQUE", "not unique");
+		return callback(new_400("NOT_UNIQUE"_s, "not unique"_s));
 	}
 }
 void api::restful::users_ctrl::delete_one(const drogon::HttpRequestPtr& req,
@@ -104,9 +98,9 @@ void api::restful::users_ctrl::delete_one(const drogon::HttpRequestPtr& req,
 	drogon::orm::Mapper< Users > mapper(sql_client);
 	std::size_t affected = mapper.deleteByPrimaryKey(id);
 	if (affected == 0)
-		send_error(std::move(callback), drogon::k404NotFound, "NOT_EXISTS", "unknown user");
+		return callback(new_error(drogon::k404NotFound, "NOT_EXISTS"_s, "unknown user"_s));
 	else
-		send_success(std::move(callback));
+		return callback(new_response());
 }
 
 void api::restful::users_ctrl::subscribe(const drogon::HttpRequestPtr& req,
@@ -115,34 +109,38 @@ void api::restful::users_ctrl::subscribe(const drogon::HttpRequestPtr& req,
 	const auto& json = req->getJsonObject();
 	if (!json || !json->isArray())
 	{
-		send_400(std::move(callback), "NOT_JSON", "expected json array");
-		return;
+		return callback(new_400("NOT_JSON"_s, "expected json array"_s));
 	}
 	drogon::orm::DbClientPtr sql_client = drogon::app().getDbClient();
 	drogon::orm::Mapper< Users > mapper(sql_client);
 
 	Users user;
 	user.setId(id);
-	user.setSubscribes(parse_array(*json));
+	try
+	{
+		user.setSubscribes(parse_array(*json));
+	}
+	catch (const Json::Exception& e)
+	{
+		return callback(new_400("WRONG_JSON_FORMATS", e.what()));
+	}
 
 	std::size_t affected = mapper.update(user);
 	if (affected == 0)
-		send_error(std::move(callback), drogon::k404NotFound, "NOT_EXISTS", "unknown user");
+		return callback(new_error(drogon::k404NotFound, "NOT_EXISTS"_s, "unknown user"_s));
 	else
-		send_code_only(std::move(callback), drogon::k202Accepted);
+		return callback(new_json(*json, drogon::k202Accepted));
 }
 void api::restful::users_ctrl::create(const drogon::HttpRequestPtr& req, drogon::AdviceCallback&& callback)
 {
 	const auto& json = req->getJsonObject();
 	if (!json || !json->isObject())
 	{
-		send_400(std::move(callback), "NOT_JSON", "expected json object");
-		return;
+		return callback(new_400("NOT_JSON"_s, "expected json object"_s));
 	}
 	if (json->get("password", "").asString().length() < 8)
 	{
-		send_400(std::move(callback), "TOO_SHORT_PW", "password must be at least 8 chars length");
-		return;
+		return callback(new_400("TOO_SHORT_PW"_s, "password must be at least 8 chars length"_s));
 	}
 	drogon::orm::DbClientPtr sql_client = drogon::app().getDbClient();
 	drogon::orm::Mapper< Users > mapper(sql_client);
@@ -158,11 +156,11 @@ void api::restful::users_ctrl::create(const drogon::HttpRequestPtr& req, drogon:
 		mapper.insert(user);
 		Json::Value json = user.toJson();
 		json.removeMember(Users::Cols::_password);
-		callback(api::new_json_response(std::move(json), drogon::k201Created));
+		callback(new_json(std::move(json), drogon::k201Created));
 	}
 	catch (const drogon::orm::UniqueViolation&)
 	{
-		send_400(std::move(callback), "FAILED", "not unique");
+		return callback(new_400("FAILED"_s, "not unique"_s));
 	}
 }
 void api::restful::users_ctrl::login(const drogon::HttpRequestPtr& request, drogon::AdviceCallback&& callback)
@@ -170,15 +168,13 @@ void api::restful::users_ctrl::login(const drogon::HttpRequestPtr& request, drog
 	const std::shared_ptr< Json::Value >& body = request->getJsonObject();
 	if (!body || !body->isObject())
 	{
-		send_400(std::move(callback), "NOT_JSON", "expected json object");
-		return;
+		return callback(new_400("NOT_JSON"_s, "expected json object"_s));
 	}
 	std::string nickname = body->get("nickname", "").asString();
 	std::string password = body->get("password", "").asString();
 	if (nickname.empty() || password.empty())
 	{
-		send_400(std::move(callback), "MISSING_OBLIGATORY", "missing login or password in json");
-		return;
+		return callback(new_400("MISSING_OBLIGATORY"_s, "missing login or password in json"_s));
 	}
 	drogon::orm::DbClientPtr sql_client = drogon::app().getDbClient();
 	drogon::orm::Mapper< Users > mapper(sql_client);
@@ -204,5 +200,5 @@ void api::restful::users_ctrl::login(const drogon::HttpRequestPtr& request, drog
 	}
 	catch (const drogon::orm::UnexpectedRows&)
 	{}
-	send_400(std::move(callback), "FAILED", "wrong login or password");
+	return callback(new_400("FAILED"_s, "wrong login or password"_s));
 }

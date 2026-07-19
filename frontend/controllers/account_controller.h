@@ -15,8 +15,8 @@ namespace account
 			ADD_METHOD_TO(controller::register_user, "/account/register", drogon::Post);
 			ADD_METHOD_TO(controller::logout, "/account/logout", drogon::Post);
 
-			ADD_METHOD_TO(controller::pass_self, "/api/users/{:id}/subscribe", drogon::Post,
-						drogon::Options, "api::logged_mw");
+			ADD_METHOD_TO(controller::pass_subscribe, "/api/users/{:id}/subscribe", drogon::Post,
+						drogon::Delete, drogon::Put, drogon::Options, "api::logged_mw");
 			ADD_METHOD_TO(controller::pass_self, "/api/users/{:id}", drogon::Get, drogon::Put,
 						drogon::Options, "api::logged_mw");
 			ADD_METHOD_TO(controller::pass_self, "/api/users/{:id}", drogon::Delete, "api::admin_mw");
@@ -35,6 +35,8 @@ namespace account
 		drogon::Task<> pass(drogon::HttpRequestPtr request, drogon::AdviceCallback callback);
 		drogon::Task<> pass_login(drogon::HttpRequestPtr request, drogon::AdviceCallback callback);
 		drogon::Task<> pass_self(drogon::HttpRequestPtr request, drogon::AdviceCallback callback,
+					std::size_t target_id);
+		drogon::Task<> pass_subscribe(drogon::HttpRequestPtr request, drogon::AdviceCallback callback,
 					std::size_t target_id);
 
 	private:

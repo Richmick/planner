@@ -15,11 +15,21 @@ namespace account
 		std::size_t id = json.get("id", -1).asUInt64();
 		data::user_t user = {.id = id, .login = json.get("nickname", "").asString()};
 		user.last_login = data::user_t::timepoint_t{std::chrono::seconds{json.get("last_login", 0).asInt64()}};
+		const Json::Value& subs = json.get("subscribes", Json::arrayValue);
+		if (subs.isArray())
+		{
+			user.subscribes.reserve(subs.size());
+			for (const Json::Value& i: subs)
+			{
+				user.subscribes.push_back(i.asUInt64());
+			}
+		}
 		session->erase("user");
 		session->insert("user", std::move(user));
 		return id;
 	}
 }
+
 drogon::Task<> account::controller::pass_login(drogon::HttpRequestPtr request, drogon::AdviceCallback callback)
 {
 	drogon::HttpClientPtr user_service = innerplane::users.get(request);
@@ -35,18 +45,123 @@ drogon::Task<> account::controller::pass(drogon::HttpRequestPtr request, drogon:
 	request->setPassThrough(true);
 	callback(co_await user_service->sendRequestCoro(request));
 }
-drogon::Task<> account::controller::pass_self(drogon::HttpRequestPtr request, drogon::AdviceCallback callback,
-			std::size_t target_id)
+drogon::Task<> account::controller::pass_self(drogon::HttpRequestPtr request,
+			drogon::AdviceCallback callback, std::size_t target_id)
 {
+	using namespace api::response;
+	using api::operator""_s;
+
 	drogon::HttpClientPtr user_service = innerplane::users.get(request);
 	auto user = request->session()->get< data::user_t >("user");
 	if (!user.is_admin && (user.id != target_id))
 	{
-		api::send_error(std::move(callback), drogon::k403Forbidden, "NOT_ADMIN", "requires admin");
+		callback(new_error(drogon::k403Forbidden, "NOT_ADMIN"_s, "requires admin"_s));
 		co_return;
 	}
 	request->setPassThrough(true);
 	callback(co_await user_service->sendRequestCoro(request));
+}
+
+drogon::Task<> account::controller::pass_subscribe(drogon::HttpRequestPtr request,
+			drogon::AdviceCallback callback, std::size_t target_id)
+{
+	using namespace api::response;
+	using api::operator""_s;
+
+	drogon::HttpClientPtr user_service = innerplane::users.get(request);
+	drogon::HttpClientPtr calendar_service = innerplane::calendar.get(request);
+	auto user = request->session()->get< data::user_t >("user");
+	if (!user.is_admin && (user.id != target_id))
+	{
+		co_return callback(new_error(drogon::k403Forbidden, "NOT_ADMIN"_s, "requires admin"_s));
+	}
+	const auto& json = request->getJsonObject();
+	if (!json || !json->isArray())
+	{
+		co_return callback(new_400("NOT_JSON"_s, "expected json array"_s));
+	}
+	std::vector< std::size_t > requested;
+	requested.reserve(json->size());
+	for (const Json::Value& i: *json)
+	{
+		if (!i.isUInt64())
+		{
+			co_return callback(new_400("WRONG_JSON_TYPE"_s, "expected lists to create/delete"_s));
+		}
+		requested.push_back(i.asUInt64());
+	}
+	std::sort(requested.begin(), requested.end());
+	if (requested.size() + user.subscribes.size() <= 0)
+	{
+		co_return callback(new_json(Json::arrayValue));
+	}
+
+	bool watch_add = (request->method() == drogon::Post) || (request->method() == drogon::Put);
+	bool watch_delete = request->method() == drogon::Put;
+	bool watch_overlap = request->method() == drogon::Delete;
+	Json::Value to_create{Json::arrayValue}, to_delete{Json::arrayValue};
+	std::vector< std::size_t > resulting_subs;
+	std::size_t req_i = 0;
+	for (std::size_t user_i = 0; user_i < user.subscribes.size(); user_i++)
+	{
+		bool add = true;
+		while (req_i < requested.size())
+		{
+			if (user.subscribes[user_i] < requested[req_i]) break;
+			if (user.subscribes[user_i] == requested[req_i++])
+			{
+				resulting_subs.push_back(user.subscribes[user_i]);
+				add = false;
+				if (watch_overlap) to_delete.append(user.subscribes[user_i]);
+				else break;
+			}
+			if (watch_add)
+			{
+				to_create.append(requested[req_i - 1]);
+			}
+		}
+		if (watch_delete && add) to_delete.append(user.subscribes[user_i]);
+	}
+	if (watch_add)
+	{
+		for (; req_i < requested.size(); req_i++)
+		{
+			to_create.append(requested[req_i]);
+		}
+	}
+	if (to_create.size() + to_delete.size() <= 0)
+	{
+		Json::Value response{Json::arrayValue};
+		for (std::size_t i: user.subscribes) response.append(i);
+		co_return callback(new_json(std::move(response)));
+	}
+
+	Json::Value sub_req_json;
+	if (watch_add) sub_req_json["create"] = std::move(to_create);
+	if (watch_delete || watch_overlap) sub_req_json["delete"] = std::move(to_delete);
+	drogon::HttpRequestPtr sub_req = drogon::HttpRequest::newHttpJsonRequest(sub_req_json);
+	sub_req->setMethod(drogon::HttpMethod::Post);
+	sub_req->setPath("/api/sources/renew-subscribes/" + std::to_string(target_id));
+	drogon::HttpResponsePtr sub_resp = co_await calendar_service->sendRequestCoro(sub_req);
+	const auto& sub_json = sub_resp->getJsonObject();
+	if ((sub_resp->statusCode() >= 200) && (sub_resp->statusCode() < 300) && sub_json && sub_json->isArray())
+	{
+		for (const Json::Value& i: *sub_json) resulting_subs.push_back(i.asUInt64());
+		user.subscribes = std::move(resulting_subs);
+
+		Json::Value sub_req_json{Json::arrayValue};
+		for (std::size_t i: user.subscribes) sub_req_json.append(i);
+		request->session()->modify< data::user_t >("user",
+					[user = std::move(user)](auto& u) {u = std::move(user);});
+		drogon::HttpRequestPtr sub_req = drogon::HttpRequest::newHttpJsonRequest(sub_req_json);
+		sub_req->setMethod(drogon::HttpMethod::Post);
+		sub_req->setPath("/api/users/" + std::to_string(target_id) + "/subscribe");
+		callback(co_await user_service->sendRequestCoro(sub_req));
+	}
+	else
+	{
+		callback(sub_resp);
+	}
 }
 
 account::controller::error account::controller::parse_user(const drogon::SessionPtr& session,
@@ -81,23 +196,19 @@ drogon::Task<> account::controller::register_user(drogon::HttpRequestPtr request
 
 	if (login.empty() || email.empty() || password.empty() || password_confirm.empty())
 	{
-		callback(gen_register_page(request->session(), error::EMPTY_FIELDS));
-		co_return;
+		co_return callback(gen_register_page(request->session(), error::EMPTY_FIELDS));
 	}
 	if (password != password_confirm)
 	{
-		callback(gen_register_page(request->session(), error::PASSWORDS_MISMATCH));
-		co_return;
+		co_return callback(gen_register_page(request->session(), error::PASSWORDS_MISMATCH));
 	}
 	if (password.length() < 8)
 	{
-		callback(gen_register_page(request->session(), error::TOO_SHORT_PW));
-		co_return;
+		co_return callback(gen_register_page(request->session(), error::TOO_SHORT_PW));
 	}
 	if (!data::is_login(login) || !data::is_email(email))
 	{
-		callback(gen_register_page(request->session(), error::WRONG_FORMAT));
-		co_return;
+		co_return callback(gen_register_page(request->session(), error::WRONG_FORMAT));
 	}
 	
 	drogon::HttpClientPtr user_service = innerplane::users.get(request);
@@ -113,8 +224,7 @@ drogon::Task<> account::controller::register_user(drogon::HttpRequestPtr request
 	if (err == error::none)
 	{
 		LOG_INFO << "User \"" << login << "\" (ID=" << user_id << ") registered";
-		callback(default_redirect(user_id));
-		co_return;
+		co_return callback(default_redirect(user_id));
 	}
 	callback(gen_register_page(request->session(), err));
 }
@@ -178,13 +288,11 @@ drogon::Task<> account::controller::login(drogon::HttpRequestPtr request, drogon
 	std::string password = request->getParameter("password");
 	if (login.empty() || password.empty())
 	{
-		callback(gen_login_page(request->session(), error::EMPTY_FIELDS));
-		co_return;
+		co_return callback(gen_login_page(request->session(), error::EMPTY_FIELDS));
 	}
 	if (!data::is_login(login))
 	{
-		callback(gen_login_page(request->session(), error::WRONG_FORMAT));
-		co_return;
+		co_return callback(gen_login_page(request->session(), error::WRONG_FORMAT));
 	}
 
 	drogon::HttpClientPtr user_service = innerplane::users.get(request);
@@ -199,8 +307,7 @@ drogon::Task<> account::controller::login(drogon::HttpRequestPtr request, drogon
 	if (err == error::none)
 	{
 		LOG_INFO << "User \"" << login << "\" (ID=" << user_id << ") logged in";
-		callback(default_redirect(user_id));
-		co_return;
+		co_return callback(default_redirect(user_id));
 	}
 	callback(gen_login_page(request->session(), err));
 }
