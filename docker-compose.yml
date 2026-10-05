@@ -1,0 +1,15 @@
+services:
+  planner:
+    image: drogonframework/drogon
+    tty: true
+    working_dir: /app/build
+    ports:
+      - "443:443"
+    volumes:
+      - "./config:/app/config"
+      - "./.ssl:/app/.ssl"
+      - "./services:/app/services"
+      - "./external:/app/external"
+      - "./common:/app/common"
+      - "./CMakeLists.txt:/app/CMakeLists.txt"
+      - "./start-builded.sh:/app/start-builded.sh"
