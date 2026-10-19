@@ -66,28 +66,30 @@
 				"use_local_time": true,
 				"log_index": 0
 			}
-		}
-	],
-	"custom_config":
-	{
-		"net":
+		},
 		{
-			"type": "static",
-			"links":
+			"name": "api::gateway::proxy_plugin",
+			"dependencies": [],
+			"config":
 			{
-				"users":
+				"route": "static",
+				"links":
 				{
-					"address": "http://127.0.0.1:5700",
-					"same_client_to_same_backend": true,
-					"connection_factor": 1
-				},
-				"calendar":
-				{
-					"address": "http://127.0.0.1:5701",
-					"same_client_to_same_backend": true,
-					"connection_factor": 1
+					"users":
+					{
+						"address": "http://127.0.0.1:5701",
+						"same_client_to_same_backend": true,
+						"connection_factor": 1
+					},
+					"calendars":
+					{
+						"address": "http://127.0.0.1:5702",
+						"same_client_to_same_backend": true,
+						"connection_factor": 1
+					}
 				}
 			}
 		}
-	}
+	],
+	"custom_config": {}
 }

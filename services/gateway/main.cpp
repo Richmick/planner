@@ -1,6 +1,7 @@
 #include <drogon/drogon.h>
+#include <http_utils.hpp>
 
-int main(int argc, const char*const* argv)
+int main(int argc, const char* const* argv)
 {
 	if (argc > 2)
 	{
@@ -21,7 +22,6 @@ int main(int argc, const char*const* argv)
 		LOG_FATAL << "failed to load config \"" << config_file << "\": " << e.what();
 		return 2;
 	}
-	LOG_INFO << "Gateway started. Listening...";
+	//drogon::app().setExceptionHandler();
 	drogon::app().run();
-	LOG_INFO << "Gateway exited successfully";
 }

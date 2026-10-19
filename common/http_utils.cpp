@@ -1,44 +1,50 @@
-﻿#include "http_utils.h"
+﻿#include "http_utils.hpp"
 
-drogon::HttpResponsePtr api::response::new_response(drogon::HttpStatusCode code)
+api::response_t api::response::new_response(code_t code)
 {
 	auto response = drogon::HttpResponse::newHttpResponse();
 	response->setStatusCode(code);
 	return response;
 }
-drogon::HttpResponsePtr api::response::new_error(drogon::HttpStatusCode code,
+api::response_t api::response::new_error(code_t code,
 			Json::StaticString errcode, Json::StaticString errmsg)
 {
 	Json::Value json, err;
 	err["code"] = errcode;
 	err["msg"] = errmsg;
 	json["error"] = std::move(err);
-	auto response = drogon::HttpResponse::newHttpJsonResponse(std::move(json));
+	response_t response = drogon::HttpResponse::newHttpJsonResponse(std::move(json));
 	response->setStatusCode(code);
 	return response;
 }
-drogon::HttpResponsePtr api::response::new_error(drogon::HttpStatusCode code,
+api::response_t api::response::new_error(code_t code,
 			const std::string& errcode, const std::string& errmsg)
 {
 	Json::Value json, err;
 	err["code"] = errcode;
 	err["msg"] = errmsg;
 	json["error"] = std::move(err);
-	auto response = drogon::HttpResponse::newHttpJsonResponse(std::move(json));
+	response_t response = drogon::HttpResponse::newHttpJsonResponse(std::move(json));
 	response->setStatusCode(code);
 	return response;
 }
-drogon::HttpResponsePtr api::response::new_400(const std::string& errcode, const std::string& errmsg)
+api::response_t api::response::new_400(const std::string& errcode, const std::string& errmsg)
 {
-	return new_error(drogon::HttpStatusCode::k400BadRequest, errcode, errmsg);
+	return new_error(code::k400_bad_request, errcode, errmsg);
 }
-drogon::HttpResponsePtr api::response::new_400(Json::StaticString errcode, Json::StaticString errmsg)
+api::response_t api::response::new_400(Json::StaticString errcode, Json::StaticString errmsg)
 {
-	return new_error(drogon::HttpStatusCode::k400BadRequest, errcode, errmsg);
+	return new_error(code::k400_bad_request, errcode, errmsg);
 }
-drogon::HttpResponsePtr api::response::new_json(const Json::Value& json, drogon::HttpStatusCode code)
+api::response_t api::response::new_404_not_found()
 {
-	drogon::HttpResponsePtr result = drogon::HttpResponse::newHttpJsonResponse(json);
+	type result = new_response(code::k404_not_found);
+	result->setBody("{\"error\":\"Not found in your scope\"}");
+	return result;
+}
+api::response_t api::response::new_json(const Json::Value& json, drogon::HttpStatusCode code)
+{
+	response_t result = drogon::HttpResponse::newHttpJsonResponse(json);
 	result->setStatusCode(code);
 	return result;
 }

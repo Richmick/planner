@@ -3,7 +3,7 @@
 	[
 		{
 			"address": "localhost",
-			"port": 5700
+			"port": 5701
 		}
 	],
 	"db_clients":
@@ -11,7 +11,7 @@
 		{
 			"name": "default",
 			"rdbms": "sqlite3",
-			"filename":"./users.sqlite",
+			"filename":"./db/users.sqlite",
 			"dbname": "users",
 			"client_encoding": "",
 			"number_of_connections": 1,

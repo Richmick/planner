@@ -1,45 +1,60 @@
-﻿cmake_minimum_required(VERSION 3.5)
-project(planner-users
-	DESCRIPTION "Service with user profiles"
+﻿cmake_minimum_required(VERSION 3.10)
+
+project("planner-users"
+	DESCRIPTION "User profiles service for Planner application"
 	VERSION 0.1.0
 	LANGUAGES CXX
 )
 
 find_package(Drogon CONFIG REQUIRED)
 find_package(libsodium CONFIG REQUIRED)
+string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}" is_top_level_project)
+if (is_top_level_project)
+	add_subdirectory("../../common/")
+	list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake")
+	include(set_language)
+endif()
 
-set(CMAKE_CXX_STANDARD 20)
-set(PLANNER_USERS_CXX_STANDARD, ${CMAKE_CXX_STANDARD})
+# Parameters
 
-if (PLANNER_USERS_CXX_STANDARD LESS 20)
-	message(STATUS "use c++17")
-else ()
-	message(STATUS "use c++${PLANNER_USERS_CXX_STANDARD}")
-endif ()
+setup_cpp_std(Users 23)
+if (NOT DEFINED PLANNER_RUNTIME_OUTPUT_DIRECTORY)
+	set(PLANNER_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/service-executables")
+endif()
+if (NOT DEFINED PLANNER_CONFIG_DIRECTORY)
+	set(PLANNER_CONFIG_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../../config")
+endif()
 
 add_executable("${PROJECT_NAME}")
-target_link_libraries(${PROJECT_NAME} PRIVATE Drogon::Drogon libsodium::libsodium)
-set_target_properties(${TARGET} PROPERTIES
+set_target_properties("${PROJECT_NAME}" PROPERTIES
 	CXX_STANDARD ${PLANNER_USERS_CXX_STANDARD}
 	CXX_STANDARD_REQUIRED ON
 	CXX_EXTENSIONS OFF
+	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/service-executables/"
+	RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/service-executables/"
 )
-target_include_directories(${PROJECT_NAME}
-			PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
-				${CMAKE_CURRENT_SOURCE_DIR}/models ${CMAKE_CURRENT_SOURCE_DIR}/../common)
-
-aux_source_directory(controllers CTRL_SRC)
-aux_source_directory(models MODEL_SRC)
-aux_source_directory(../../common COMMON_SRC)
+target_include_directories("${PROJECT_NAME}" PRIVATE
+	"${CMAKE_CURRENT_SOURCE_DIR}"
+)
+target_link_libraries(${PROJECT_NAME} PRIVATE Drogon::Drogon libsodium::libsodium plannerlib)
 target_sources("${PROJECT_NAME}" PRIVATE
-	"main.cc"
-	${CTRL_SRC}
-	${MODEL_SRC}
-	${COMMON_SRC}
+	"main.cpp"
+
+	"controllers/profiles.cpp"
+	"controllers/responses.cpp"
+	"controllers/profiles.hpp"
+
+	"models/convert.cpp"
+	"models/users.hpp"
 )
 
-# Copy database
-if ((NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/users.sqlite)
-		OR (${CMAKE_CURRENT_SOURCE_DIR}/users.sqlite IS_NEWER_THAN ${CMAKE_CURRENT_BINARY_DIR}/users.sqlite))
-	file(COPY_FILE ${CMAKE_CURRENT_SOURCE_DIR}/users.sqlite ${CMAKE_CURRENT_BINARY_DIR}/users.sqlite)
-endif()
+# Dependencies copying
+
+add_custom_command(TARGET "${PROJECT_NAME}" POST_BUILD
+	COMMAND "${CMAKE_COMMAND}" -E copy
+		"${PLANNER_CONFIG_DIRECTORY}/users.json"
+		"${PLANNER_RUNTIME_OUTPUT_DIRECTORY}/config/users.json"
+	COMMAND "${CMAKE_COMMAND}" -E copy
+		"${CMAKE_CURRENT_SOURCE_DIR}/users.sqlite"
+		"${PLANNER_RUNTIME_OUTPUT_DIRECTORY}/db/users.sqlite"
+)

@@ -5,6 +5,8 @@ project(planner
 	VERSION 0.1.0
 	LANGUAGES CXX
 )
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include(set_language)
 
 # Parameters
 
@@ -14,7 +16,7 @@ set(PLANNER_CONFIG_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/config)
 if (NOT DEFINED CMAKE_CXX_STANDARD)
 	set(PLANNER_CXX_STANDARD 20)
 elseif (${CMAKE_CXX_STANDARD} LESS 20)
-	message(WARNING "C++20 required - use it over cmake global C++${CMAKE_CXX_STANDARD}")
+	message(WARNING "Planner: C++20 required - use it over cmake global C++${CMAKE_CXX_STANDARD}")
 	set(PLANNER_CXX_STANDARD 20)
 else()
 	set(PLANNER_CXX_STANDARD ${CMAKE_CXX_STANDARD})
@@ -22,16 +24,17 @@ endif()
 
 # Targets
 
+add_subdirectory(common)
 #add_subdirectory(external/os-tools)
 
 add_subdirectory(services/gateway)
 #add_subdirectory(services/frontend)
-#add_subdirectory(services/users)
-#add_subdirectory(services/calendar)
+add_subdirectory(services/users)
+#add_subdirectory(services/calendars)
 
 add_custom_target("build-all" DEPENDS
 	planner-gateway
 	#planner-frontend
-	#planner-users
-	#planner-calendar
+	planner-users
+	#planner-calendars
 )

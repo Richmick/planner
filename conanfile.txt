@@ -8,6 +8,7 @@ openssl/1.1.1t
 hiredis/1.0.0
 brotli/1.0.9
 
+libsodium/1.0.22
+
 [generators]
 CMakeToolchain
-#CMakeDeps

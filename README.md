@@ -68,8 +68,8 @@ exit
 #### Windows
 ```shell
 cd build
-conan install .. -pr default --output-folder . --build=missing
 conan install ../conanfile_lib.txt -pr default --output-folder . --build=missing
+conan install .. -pr default --output-folder . --build=missing
 ```
 
 ## Usage
