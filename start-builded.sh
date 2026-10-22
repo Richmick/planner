@@ -2,7 +2,8 @@
 
 cd "/app/build/service-executables"
 "./planner-gateway" &
-"./planner-users" &
 "./planner-frontend" &
+"./planner-users" &
+"./planner-scheduler" &
 wait
 echo "all services exited"

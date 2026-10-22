@@ -31,6 +31,8 @@ add_subdirectory(services/gateway)
 add_subdirectory(services/frontend)
 add_subdirectory(services/users)
 #add_subdirectory(services/calendars)
+add_subdirectory(services/scheduler)
+#add_subdirectory(services/notifier)
 
 add_custom_target("build-all" DEPENDS
 	planner-gateway

@@ -92,6 +92,12 @@
 						"address": "http://127.0.0.1:5702",
 						"same_client_to_same_backend": true,
 						"connection_factor": 1
+					},
+					"scheduler":
+					{
+						"address": "http://127.0.0.1:5703",
+						"same_client_to_same_backend": true,
+						"connection_factor": 1
 					}
 				}
 			}
