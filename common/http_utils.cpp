@@ -36,9 +36,21 @@ api::response_t api::response::new_400(Json::StaticString errcode, Json::StaticS
 {
 	return new_error(code::k400_bad_request, errcode, errmsg);
 }
+api::response_t api::response::new_401_unauthorized()
+{
+	response_t result = new_response(code::k401_unauthorized);
+	result->setBody("{\"error\":\"Log in via /api/login\"}");
+	return result;
+}
+api::response_t api::response::new_403_forbidden()
+{
+	response_t result = new_response(code::k403_forbidden);
+	result->setBody("{\"error\":\"Access forbidden\"}");
+	return result;
+}
 api::response_t api::response::new_404_not_found()
 {
-	type result = new_response(code::k404_not_found);
+	response_t result = new_response(code::k404_not_found);
 	result->setBody("{\"error\":\"Not found in your scope\"}");
 	return result;
 }

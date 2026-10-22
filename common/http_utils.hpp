@@ -45,12 +45,19 @@ namespace api
 		type new_400(Json::StaticString errcode, Json::StaticString errmsg);
 		type new_400(const std::string& errcode, const std::string& errmsg);
 
+		type new_401_unauthorized();
+		type new_403_forbidden();
 		type new_404_not_found();
 	};
 	using response_t = response::type;
 	using request_t = drogon::HttpRequestPtr;
 	using response_callback = drogon::AdviceCallback;
 	using request_callback = drogon::HttpReqCallback;
+
+	template< class T >
+	using middlware_t = drogon::HttpMiddleware< T >;
+	using middlware_pass_callback = drogon::MiddlewareNextCallback;
+	using middlware_reject_callback = drogon::MiddlewareCallback;
 
 	#if defined(__cpp_lib_expected) && __cpp_lib_expected > 0
 		template< class T >

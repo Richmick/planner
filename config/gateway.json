@@ -75,6 +75,12 @@
 				"route": "static",
 				"links":
 				{
+					"frontend":
+					{
+						"address": "http://127.0.0.1:5700",
+						"same_client_to_same_backend": true,
+						"connection_factor": 1
+					},
 					"users":
 					{
 						"address": "http://127.0.0.1:5701",

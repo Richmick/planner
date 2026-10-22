@@ -1,50 +1,58 @@
-﻿cmake_minimum_required(VERSION 3.20)
-project(frontend CXX)
+﻿cmake_minimum_required(VERSION 3.10)
 
-include(CheckIncludeFileCXX)
+project("planner-frontend"
+	DESCRIPTION "Frontend service for Planner application"
+	VERSION 0.2.0
+	LANGUAGES CXX
+)
 
-check_include_file_cxx(any HAS_ANY)
-check_include_file_cxx(string_view HAS_STRING_VIEW)
-check_include_file_cxx(coroutine HAS_COROUTINE)
-if (NOT "${CMAKE_CXX_STANDARD}" STREQUAL "")
-	# Do nothing
-elseif (HAS_ANY AND HAS_STRING_VIEW AND HAS_COROUTINE)
-	set(CMAKE_CXX_STANDARD 20)
-elseif (HAS_ANY AND HAS_STRING_VIEW)
-	set(CMAKE_CXX_STANDARD 17)
-else ()
-	set(CMAKE_CXX_STANDARD 14)
-endif ()
+find_package(Drogon CONFIG REQUIRED)
+string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}" is_top_level_project)
+if (is_top_level_project)
+	add_subdirectory("../../common/")
+	list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake")
+	include(set_language)
+endif()
 
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
 add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
 add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 
-add_executable(${PROJECT_NAME} main.cc)
+# Parameters
 
-find_package(Drogon CONFIG REQUIRED)
-find_package(libsodium CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} PRIVATE Drogon::Drogon libsodium::libsodium)
+setup_cpp_std(Frontend 20)
+if (NOT DEFINED PLANNER_RUNTIME_OUTPUT_DIRECTORY)
+	set(PLANNER_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/service-executables")
+endif()
+if (NOT DEFINED PLANNER_CONFIG_DIRECTORY)
+	set(PLANNER_CONFIG_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../../config")
+endif()
 
+add_executable("${PROJECT_NAME}")
+set_target_properties("${PROJECT_NAME}" PROPERTIES
+	CXX_STANDARD ${PLANNER_FRONTEND_CXX_STANDARD}
+	CXX_STANDARD_REQUIRED ON
+	CXX_EXTENSIONS OFF
+	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/service-executables/"
+	RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/service-executables/"
+)
+target_include_directories("${PROJECT_NAME}" PRIVATE
+	"${CMAKE_CURRENT_SOURCE_DIR}"
+)
+target_link_libraries("${PROJECT_NAME}" PRIVATE Drogon::Drogon plannerlib)
+target_sources("${PROJECT_NAME}" PRIVATE
+	"main.cpp"
+	"controllers/account.cpp"
+	"controllers/account.hpp"
+)
+drogon_create_views("${PROJECT_NAME}" "${CMAKE_CURRENT_SOURCE_DIR}/views" "${CMAKE_CURRENT_BINARY_DIR}" TRUE)
 
-if (CMAKE_CXX_STANDARD LESS 17)
-	message(FATAL_ERROR "c++17 or higher is required")
-elseif (CMAKE_CXX_STANDARD LESS 20)
-	message(STATUS "use c++17")
-else ()
-	message(STATUS "use c++20")
-endif ()
+# Dependencies copying
 
-aux_source_directory(data DATA_SRC)
-aux_source_directory(controllers CTL_SRC)
-aux_source_directory(filters FILTER_SRC)
-aux_source_directory(../common COMMON_SRC)
-
-drogon_create_views(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/views ${CMAKE_CURRENT_BINARY_DIR} TRUE)
-
-target_include_directories(${PROJECT_NAME}
-			PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
-				${CMAKE_CURRENT_SOURCE_DIR}/models ${CMAKE_CURRENT_SOURCE_DIR}/../common)
-target_sources(${PROJECT_NAME}
-			PRIVATE ${SRC_DIR} ${DATA_SRC} ${CTL_SRC} ${FILTER_SRC} ${COMMON_SRC})
+add_custom_command(TARGET "${PROJECT_NAME}" POST_BUILD
+	COMMAND "${CMAKE_COMMAND}" -E copy
+		"${PLANNER_CONFIG_DIRECTORY}/frontend.json"
+		"${PLANNER_RUNTIME_OUTPUT_DIRECTORY}/config/frontend.json"
+	COMMAND "${CMAKE_COMMAND}" -E copy_directory
+		"${CMAKE_CURRENT_SOURCE_DIR}/static/"
+		"${PLANNER_RUNTIME_OUTPUT_DIRECTORY}/static/"
+)

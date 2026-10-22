@@ -53,3 +53,9 @@ a {
 	border: 1px solid #f1b4b4;
 	background: #fff1f1;
 }
+.success {
+	text-align: center;
+	color: #2f881c;
+	border: 1px solid #c4f1b4;
+	background: #f2fff1;
+}

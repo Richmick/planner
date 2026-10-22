@@ -2,40 +2,67 @@
 <html lang="ru">
 
 <%c++
-	auto calendar_id = @@.get< std::size_t >("calendar_id");
-	auto calendar_name = @@.get< std::string >("calendar_name");
-	auto err = @@.get< std::string >("error");
 	auto sessid = @@.get< std::string >("sessid");
 %>
 
 <head>
 	<meta charset="UTF-8">
+	<input type="hidden" name="sessid" id="sessid" value="<%c++   $$ << sessid;   %>" >
 	<link rel="stylesheet" href="/common.css">
 	<title>Планер дня</title>
 </head>
 <body>
 	<header>
 		<div>
-		<p class="calendar_name"><%c++   $$ << calendar_name;   %></p>
-		<%c++   if (sessid.empty()) {   %>
-			<a href="/account/login" class="login">Войти</a>
-		<%c++   } else {   %>
-			<form action="/account/logout" method="POST">
-				<input type="hidden" name="sessid" id="sessid" value="<%c++   $$ << sessid;   %>" >
-				<button type="submit" class="login">Выйти</button>
-			</form>
-		<%c++   }   %>
+			<p class="calendar_name"></p>
+			<a id="login-link" href="/login" class="login">Войти</a>
 		</div>
 	</header>
-	<main>
-		<%c++   if (!err.empty()){   %>
-			<div class="static_error">
-				<%c++   $$ << err;   %>
-			</div>
-		<%c++   }   %>
 
+	<main>
 		[[]]
 	</main>
+
+	<script src="/common.js"></script>
+	<script>
+		function finalizeLogout() {
+			delete localStorage["user-id"];
+			window.location.replace("/login");
+		}
+		function handleLogout(event) {
+			event.preventDefault();
+			const sessid = document.getElementById("sessid");
+			if (!sessid) {
+				finalizeLogout();
+				return;
+			}
+			fetch("/api/logout", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: `{"sessid":${sessid}}`
+			}).then((resp) => {
+						if (!resp.ok && (resp.status != 419) && (resp.status != 401)) {
+							resp.text().then((text) => {
+										alert(`Неудалось выйти (Код ${resp.status}): ${text}`);
+										finalizeLogout();
+									});
+							return;
+						}
+						finalizeLogout();
+					});
+			
+		}
+		if (localStorage["user-id"] !== undefined) {
+			let but = document.createElement("button");
+			but.type = 'submit';
+			but.classList.add("login");
+			but.textContent = "Выйти";
+			let form = document.createElement("form");
+			form.append(but);
+			document.getElementById("login-link").replaceWith(form);
+			form.addEventListener("submit", handleLogout);
+		}
+	</script>
 </body>
 
 </html>

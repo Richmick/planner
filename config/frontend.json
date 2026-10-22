@@ -11,7 +11,7 @@
 	{
 		"number_of_threads": 2,
 		"enable_session": false,
-		"document_root": "../static/",
+		"document_root": "./static",
 		"use_implicit_page": true,
 		"implicit_page": "index.html",
 		"upload_path": "./uploads",
@@ -64,5 +64,9 @@
 		"enable_request_stream": false
 	},
 	"plugins":
-	[]
+	[],
+	"custom_config":
+	{
+		"session_cookie_key": "PLANNER-SESSID"
+	}
 }

@@ -56,12 +56,15 @@ namespace api::gateway
 	struct responses
 	{
 	public:
-		response_t k401_unauthorized = api::response::new_response(api::code::k401_unauthorized);
-		response_t k403_forbidden = api::response::new_response(api::code::k403_forbidden);
+		response_t k204_ok = api::response::new_response(api::code::k204_no_content);
+
+		response_t k401_unauthorized = api::response::new_401_unauthorized();
+		response_t k403_forbidden = api::response::new_403_forbidden();
 		response_t k404_not_found = api::response::new_404_not_found();
 		response_t k419_invalid_csrf = api::response::new_response(api::code::k419_auth_timeout);
 		response_t k421_service_down = api::response::new_response(api::code::k421_misdirected_request);
 		response_t k421_frontend_down = api::response::new_response(api::code::k421_misdirected_request);
+
 		response_t k500_internal = api::response::new_response(api::code::k500_internal);
 		response_t k502_bad_gateway = api::response::new_response(api::code::k502_bad_gateway);
 		response_t k504_timeout = api::response::new_response(api::code::k504_timeout);

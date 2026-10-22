@@ -3,13 +3,12 @@
 #include <string>
 #include <drogon/HttpController.h>
 #include <http_utils.hpp>
+#include <constants.hpp>
 
 #include <models/users.hpp>
 
 namespace api::users
 {
-	static constexpr inline std::size_t pw_min_length = 8;
-
 	struct login_data
 	{
 		std::string nickname;

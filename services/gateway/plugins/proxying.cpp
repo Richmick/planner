@@ -98,8 +98,22 @@ void api::gateway::proxy_plugin::pre_route(const drogon::HttpRequestPtr& req,
 	}
 	if (subpath.starts_with("/login")) // login and update session
 	{
+		if (req->method() != drogon::HttpMethod::Post)
+		{
+			return immediate_response(resp.k404_not_found);
+		}
 		req->setPassThrough(true);
 		users.get(req)->sendRequest(req, login_callback{ std::move(immediate_response), std::move(session) });
+		return;
+	}
+	if (subpath.starts_with("/logout")) // login and update session
+	{
+		if (req->method() != drogon::HttpMethod::Post)
+		{
+			return immediate_response(resp.k404_not_found);
+		}
+		session->clear();
+		immediate_response(resp.k204_ok);
 		return;
 	}
 	std::optional user = session->getOptional< profile >("profile");

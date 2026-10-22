@@ -1,8 +1,11 @@
+<%inc
+	#include <constants.hpp>
+%>
+
 <!DOCTYPE html>
 <html lang="ru">
 
 <%c++
-	auto err = @@.get< std::string >("error");
 	auto sessid = @@.get< std::string >("sessid");
 %>
 
@@ -13,24 +16,70 @@
 </head>
 <body>
 	<h2>Вход в аккаунт</h2>
-	<form action="/account/login" method="POST">
-		<input type="hidden" name="sessid" id="sessid" value="<%c++   $$ << sessid;   %>" >
+	<form id="login-form" action="/api/login" method="POST">
+		<input type="hidden" name="sessid" id="sessid" value="<%c++   $$ << sessid;   %>">
 
-		<label for="user-login">Логин:</label>
-		<input type="text" id="user-login" name="login" placeholder="Введите логин" autocomplete="nickname" required />
-
-		<label for="user-password">Пароль:</label>
-		<input id="user-password" type="password" name="password" minlength="8" placeholder="Введите пароль" autocomplete="current-password" required />
+		<label>
+			Логин:
+			<input type="text" id="user-nickname" name="nickname" placeholder="Введите ник" autocomplete="nickname" required />
+		</label>
+		<label>
+			Пароль:
+			<input id="user-password" type="password" name="password" minlength="<%c++   $$ << api::pw_min_length;   %>" placeholder="Введите пароль" autocomplete="current-password" required />
+		</label>
 		<button type="submit">Войти</button>
 	</form>
-	<%c++   if (!err.empty()){   %>
-		<div class="feedback error">
-			<%c++   $$ << err;   %>
-		</div>
-	<%c++   }   %>
+	<div id="error-place"></div>
 	<div class="links">
-		<a href="/account/register">Зарегистрироваться</a>
+		<a href="/register" id="reg-link">Зарегистрироваться</a>
+		<a href="/" id="backurl-link">Вернуться</a>
 	</div>
+
+	<script src="/common.js"></script>
+	<script>
+		const backurl_unsafe = new URLSearchParams(window.location.search).get('backurl');
+		const backurl = !backurl_unsafe ? "/" : backurl_unsafe;
+		const dict = {
+			MISSING_OBLIGATORY: "Не введены логин или пароль",
+			FAILED: "Неверный логин или пароль",
+			INTERNAL_ERROR: "Внутренняя ошибка на сервере"
+		};
+		function applyResponse(resp) {
+			if (resp.ok) {
+				resp.json()
+						.then((obj) => {
+							localStorage["user-id"] = obj.id;
+							window.location.replace(backurl);
+						})
+						.catch(() => setError("Север прислал необрабатываемый ответ об успешной авторизации."
+							+ " Вы можете попробовать повторить авторизацию или перейти на искомую"
+							+ " страницу по кнопке \"Вернуться\""));
+				return;
+			}
+			switch (resp.status) {
+				case 419:
+					submitHandler();
+					break;
+				default:
+					resp.json()
+						.then(showError)
+						.catch((e) => setError("Нераспознанная ошибка от сервера (Код " + code + "): " + e + "\nСырая ошибка: " + resp.text()));
+					break;
+			}
+		}
+		function submitHandler(event) {
+			if (event) event.preventDefault();
+			let form = document.getElementById("login-form");
+			fetch(form.action, {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify(Object.fromEntries(new FormData(form)))
+					}).then(applyResponse);
+		}
+		document.getElementById("login-form").addEventListener("submit", submitHandler);
+		document.getElementById("backurl-link").setAttribute("href", backurl);
+		document.getElementById("reg-link").setAttribute("href", "/register?backurl=" + backurl);
+	</script>
 </body>
 
 </html>

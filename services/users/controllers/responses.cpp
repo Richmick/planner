@@ -15,6 +15,6 @@ api::users::ctrl::profiles::responses::responses()
 	k400_unsupported_password->setBody("{\"error\":{\"code\":\"PW_UNSUPPORTED\","
 				"\"msg\":\"unsupported password - try to change it somehow\"}}");
 
-	k500_db_error->setBody("{\"error\":{\"code\":\"DB_ERROR\","
-				"\"msg\":\"internal database error\"}}");
+	k500_db_error->setBody("{\"error\":{\"code\":\"INTERNAL_ERROR\","
+				"\"msg\":\"internal error\"}}");
 }

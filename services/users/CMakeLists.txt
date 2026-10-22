@@ -2,7 +2,7 @@
 
 project("planner-users"
 	DESCRIPTION "User profiles service for Planner application"
-	VERSION 0.1.0
+	VERSION 0.2.0
 	LANGUAGES CXX
 )
 
@@ -36,7 +36,7 @@ set_target_properties("${PROJECT_NAME}" PROPERTIES
 target_include_directories("${PROJECT_NAME}" PRIVATE
 	"${CMAKE_CURRENT_SOURCE_DIR}"
 )
-target_link_libraries(${PROJECT_NAME} PRIVATE Drogon::Drogon libsodium::libsodium plannerlib)
+target_link_libraries("${PROJECT_NAME}" PRIVATE Drogon::Drogon libsodium::libsodium plannerlib)
 target_sources("${PROJECT_NAME}" PRIVATE
 	"main.cpp"
 

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 
 project("planner-gateway"
 	DESCRIPTION "Reverse proxy service for Planner appplication"
-	VERSION 0.0.1
+	VERSION 0.1.0
 	LANGUAGES CXX
 )
 
@@ -35,7 +35,7 @@ set_target_properties("${PROJECT_NAME}" PROPERTIES
 target_include_directories("${PROJECT_NAME}" PRIVATE
 	"${CMAKE_CURRENT_SOURCE_DIR}"
 )
-target_link_libraries(${PROJECT_NAME} PRIVATE Drogon::Drogon plannerlib)
+target_link_libraries("${PROJECT_NAME}" PRIVATE Drogon::Drogon plannerlib)
 target_sources("${PROJECT_NAME}" PRIVATE
 	"main.cpp"
 	"plugins/service.cpp"
