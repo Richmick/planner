@@ -1,0 +1,100 @@
+<%inc
+	#include <constants.hpp>
+%>
+
+<!DOCTYPE html>
+<html lang="ru">
+
+<%c++
+	auto sessid = @@.get< std::string >("sessid");
+%>
+
+<head>
+	<meta charset="UTF-8">
+	<link rel="stylesheet" href="/account.css">
+	<title>Планер дня</title>
+</head>
+<body>
+	<h2>Вход в аккаунт</h2>
+	<form id="register-form" action="/api/profiles/register" method="POST">
+		<input type="hidden" name="sessid" id="sessid" value="<%c++   $$ << sessid;   %>">
+
+		<label>
+			Логин:
+			<input type="text" id="user-login" name="nickname" placeholder="Введите логин" autocomplete="nickname" required />
+		</label>
+		<label>
+			Email:
+			<input id="user-email" type="text" name="email" placeholder="Введите email" autocomplete="email" required />
+		</label>
+
+		<label>
+			Пароль:
+			<input type="password" name="password" minlength="<%c++   $$ << api::pw_min_length;   %>" placeholder="Введите пароль" autocomplete="current-password" required />
+		</label>
+		<label>
+			Повторите пароль:
+			<input type="password" name="password-confirm" minlength="<%c++   $$ << api::pw_min_length;   %>" placeholder="Повторите пароль" autocomplete="current-password" required />
+		</label>
+
+		<button type="submit">Зарегистрироваться</button>
+	</form>
+	<div id="error-place"></div>
+	<div class="links">
+		<a href="/login" id="login-link">Уже есть аккаунт? Войти</a>
+		<a href="/" id="backurl-link">Вернуться</a>
+	</div>
+
+	<script src="/common.js"></script>
+	<script>
+		const backurl_unsafe = new URLSearchParams(window.location.search).get('backurl');
+		const backurl = !backurl_unsafe ? "/" : backurl_unsafe;
+		const dict = {
+			MISSING_OBLIGATORY: "Не введены логин, email или пароль",
+			NICKNAME_BUSY: "Логин занят",
+			EMAIL_BUSY: "Email занят",
+			PW_UNSUPPORTED: "Пароль не удалось обработать - попробуйте изменить его как-либо",
+			INTERNAL_ERROR: "Внутренняя ошибка на сервере"
+		};
+		function applyResponse(resp) {
+			if (resp.ok) {
+				let err = document.getElementById("error-place");
+				const msg = "Регистрация прошла успешно - вы будете перенаправлены на страницу входа";
+				if (!err) {
+					alert(msg);
+					window.location.replace("/login");
+				}
+				err.textContent = msg;
+				err.classList.add("feedback");
+				err.classList.remove("error");
+				err.classList.add("success");
+				setTimeout(() => window.location.replace("/login"), 3000);
+				return;
+			}
+			switch (resp.status) {
+				case 419:
+					submitHandler();
+					break;
+				default:
+					resp.json()
+						.then(showError)
+						.catch((e) => setError("Нераспознанная ошибка от сервера (Код " + code + "): " + e + "\nСырая ошибка: " + resp.text()));
+					break;
+			}
+		}
+		function submitHandler(event) {
+			if (event) event.preventDefault();
+			let form = document.getElementById("register-form");
+			fetch(form.action, {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify(Object.fromEntries(new FormData(form)))
+					}).then(applyResponse);
+		}
+		document.getElementById("register-form").addEventListener("submit", submitHandler);
+		document.getElementById("backurl-link").setAttribute("href", backurl);
+		document.getElementById("login-link").setAttribute("href", "/login?backurl=" + backurl);
+	</script>
+</body>
+
+</html>
