@@ -13,7 +13,7 @@ void api::users::ctrl::profiles::initPathRouting()
 	//ADD_METHOD_TO(profiles::subscribe, "/api/users/{1}/subscribe", drogon::Post, drogon::Options);
 
 	ADD_METHOD_TO(profiles::login, "/api/login", drogon::Post, drogon::Options);
-	ADD_METHOD_TO(profiles::create_one,"/api/profiles/register", drogon::Post, drogon::Options);
+	ADD_METHOD_TO(profiles::create_one,"/api/auth/logup", drogon::Post, drogon::Options);
 }
 
 drogon::Task<> api::users::ctrl::profiles::get_one(api::request_t req,

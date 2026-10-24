@@ -39,6 +39,16 @@
 		"enabled_compressed_request": false,
 		"enable_request_stream": false
 	},
-	"plugins": [],
+	"plugins":
+	[
+		{
+			"name": "api::plugins::health_check",
+			"dependencies": [],
+			"config":
+			{
+				"url": "/api/scheduler/status"
+			}
+		}
+	],
 	"custom_config": {}
 }

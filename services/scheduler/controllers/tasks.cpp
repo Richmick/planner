@@ -10,18 +10,22 @@ void api::scheduler::ctrl::tasks::initPathRouting()
 /**
 	Method: POST
 	Input:
-	```json
-	[
+	```jsonl
 		{
 			"id":int64_t
-		},
+		},\n
 		...
-	]```
+	```
 	Output:
 	```json
 	[
 		{
-			"id":int64_t
+			"id":id_t,
+			"parts":
+			[
+				{"start": time, "dur": minutes},
+				...
+			]
 		},
 		...
 	]```

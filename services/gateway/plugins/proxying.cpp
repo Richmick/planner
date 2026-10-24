@@ -17,7 +17,7 @@ void api::gateway::proxy_plugin::initAndStart(const Json::Value& cfg)
 	if (!cfg.isObject())
 	{
 		LOG_FATAL << "Invalid proxy config: expected object";
-		std::abort();
+		std::exit(2);
 	}
 	Json::String route = cfg.get("route", "static").asString();
 	if (route == "static")
@@ -35,25 +35,25 @@ void api::gateway::proxy_plugin::initAndStart(const Json::Value& cfg)
 				else
 				{
 					LOG_FATAL << "Invalid proxy config: unknown service name: \"" << service << '"';
-					std::abort();
+					std::exit(2);
 				}
 			}
 			catch (const std::exception& e)
 			{
 				LOG_FATAL << "Invalid proxy config: " << e.what();
-				std::abort();
+				std::exit(2);
 			}
 		}
 		if (!users.exists())
 		{
 			LOG_FATAL << "Network missing obligatory service: \"users\"";
-			std::abort();
+			std::exit(2);
 		}
 	}
 	else
 	{
 		LOG_FATAL << "Invalid proxy config: unknown proxying policy: \"" << route << '"';
-		std::abort();
+		std::exit(2);
 	}
 	LOG_DEBUG << "finish parsing proxying plugin config";
 
@@ -91,7 +91,7 @@ void api::gateway::proxy_plugin::pre_route(const drogon::HttpRequestPtr& req,
 	}
 
 	std::string_view subpath{path.c_str() + 4, path.length() - 4};
-	if (subpath.starts_with("/profiles")) // no logged required, no result analysis
+	if (subpath.starts_with("/auth")) // no logged required, no result analysis
 	{
 		users.redirect(req, std::move(immediate_response), true);
 		return;

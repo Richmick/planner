@@ -39,8 +39,9 @@ target_link_libraries("${PROJECT_NAME}" PRIVATE Drogon::Drogon plannerlib)
 target_sources("${PROJECT_NAME}" PRIVATE
 	"main.cpp"
 	"plugins/service.cpp"
-	"plugins/proxying.cpp"
+	"plugins/service.hpp"
 	"plugins/responses.cpp"
+	"plugins/proxying.cpp"
 	"plugins/proxying.hpp"
 )
 

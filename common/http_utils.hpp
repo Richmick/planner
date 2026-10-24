@@ -65,6 +65,8 @@ namespace api
 		using unexpected = std::unexpected< std::reference_wrapper< const api::response_t > >;
 	#endif
 
+	std::string utc_now();
+
 	Json::Value prepare_array(const std::shared_ptr< std::vector< char > >& arr);
 	std::vector< std::size_t > prepare_vector(const std::shared_ptr< std::vector< char > >& arr);
 	std::vector< char > parse_array(const Json::Value& arr);

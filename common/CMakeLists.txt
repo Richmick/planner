@@ -11,6 +11,8 @@ target_include_directories("plannerlib" PUBLIC
 target_sources("plannerlib" PRIVATE
 	"http_utils.cpp"
 	"http_utils.hpp"
+	"health_check.cpp"
+	"health_check.hpp"
 	"constants.hpp"
 	"filters/account.cpp"
 	"filters/account.hpp"
