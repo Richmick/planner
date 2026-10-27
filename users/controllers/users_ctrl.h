@@ -1,10 +1,9 @@
 ﻿#pragma once
 
 #include <drogon/HttpController.h>
-
 #include "Users.h"
 
-using drogon_model::sqlite3::Users;
+using drogon_model::postgresql::Users;
 
 namespace api::restful
 {
@@ -16,20 +15,16 @@ namespace api::restful
 			ADD_METHOD_TO(users_ctrl::update_one,"/api/users/{1}", drogon::Put, drogon::Options);
 			ADD_METHOD_TO(users_ctrl::delete_one,"/api/users/{1}", drogon::Delete, drogon::Options);
 			ADD_METHOD_TO(users_ctrl::subscribe, "/api/users/{1}/subscribe", drogon::Post, drogon::Options);
+			ADD_METHOD_TO(users_ctrl::outbox_handler, "/api/users/{1}/outbox", drogon::Post, drogon::Options);
 			ADD_METHOD_TO(users_ctrl::create,"/api/users", drogon::Post, drogon::Options);
-
 			ADD_METHOD_TO(users_ctrl::login, "/api/login", drogon::Post, drogon::Options);
 		METHOD_LIST_END
 
-		void get_one(const drogon::HttpRequestPtr& req, drogon::AdviceCallback&& callback,
-					Users::PrimaryKeyType&& id);
-		void update_one(const drogon::HttpRequestPtr& req, drogon::AdviceCallback&& callback,
-					Users::PrimaryKeyType&& id);
-		void delete_one(const drogon::HttpRequestPtr& req, drogon::AdviceCallback&& callback,
-					Users::PrimaryKeyType&& id);
-
-		void subscribe(const drogon::HttpRequestPtr& req, drogon::AdviceCallback&& callback,
-					Users::PrimaryKeyType&& id);
+		void get_one(const drogon::HttpRequestPtr& req, drogon::AdviceCallback&& callback, Users::PrimaryKeyType&& id);
+		void update_one(const drogon::HttpRequestPtr& req, drogon::AdviceCallback&& callback, Users::PrimaryKeyType&& id);
+		void delete_one(const drogon::HttpRequestPtr& req, drogon::AdviceCallback&& callback, Users::PrimaryKeyType&& id);
+		void subscribe(const drogon::HttpRequestPtr& req, drogon::AdviceCallback&& callback, Users::PrimaryKeyType&& id);
+		void outbox_handler(const drogon::HttpRequestPtr& req, drogon::AdviceCallback&& callback, Users::PrimaryKeyType&& id);
 		void create(const drogon::HttpRequestPtr& req, drogon::AdviceCallback&& callback);
 		void login(const drogon::HttpRequestPtr& req, drogon::AdviceCallback&& callback);
 

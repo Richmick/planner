@@ -5,7 +5,7 @@
 
 #include "Sources.h"
 
-using drogon_model::sqlite3::Sources;
+using drogon_model::postgresql::Sources;
 
 namespace api::restful
 {
@@ -31,7 +31,7 @@ namespace api::restful
 		void delete_one(const drogon::HttpRequestPtr& req, drogon::AdviceCallback&& callback,
 					Sources::PrimaryKeyType&& id);
 
-		void subscribe_user(const drogon::HttpRequestPtr& req, drogon::AdviceCallback&& callback,
+		drogon::Task<> subscribe_user(const drogon::HttpRequestPtr& req, drogon::AdviceCallback&& callback,
 					Sources::PrimaryKeyType&& id);
 		void get(const drogon::HttpRequestPtr& req, drogon::AdviceCallback&& callback);
 		void create(const drogon::HttpRequestPtr& req, drogon::AdviceCallback&& callback);

@@ -1,34 +1,32 @@
 ﻿{
-	"listeners":
-	[
+	"listeners": [
 		{
 			"address": "localhost",
 			"port": 5701
 		}
 	],
-	"db_clients":
-	[
+	"db_clients": [
 		{
 			"name": "default",
-			"rdbms": "sqlite3",
-			"filename":"./calendar.sqlite",
+			"rdbms": "postgresql",
+			"host": "127.0.0.1",
+			"port": 5432,
 			"dbname": "calendar",
+			"user": "postgres",
+			"passwd": "postgres",
 			"client_encoding": "",
-			"number_of_connections": 1,
+			"number_of_connections": 4,
 			"timeout": -1.0
 		}
 	],
-	"app":
-	{
+	"app": {
 		"number_of_threads": 2,
 		"max_connections": 100000,
 		"max_connections_per_ip": 0,
 		"json_parser_stack_limit": 1000,
 		"enable_unicode_escaping_in_json": false,
-		"log":
-		{
+		"log": {
 			"use_spdlog": false,
-			//"log_path": "./", // commented = stdout
 			"logfile_base_name": "",
 			"log_size_limit": 100000000,
 			"max_files": 0,
@@ -52,5 +50,11 @@
 		"enable_request_stream": false
 	},
 	"plugins": [],
-	"custom_config": {}
+	"custom_config": {
+		"net": {
+			"users": {
+				"address": "http://127.0.0.1:5700"
+			}
+		}
+	}
 }

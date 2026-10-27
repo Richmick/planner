@@ -1,5 +1,4 @@
 ﻿#include "account_controller.h"
-
 #include <http_utils.h>
 #include <data/user.h>
 #include <data/net.h>
@@ -45,8 +44,7 @@ drogon::Task<> account::controller::pass(drogon::HttpRequestPtr request, drogon:
 	request->setPassThrough(true);
 	callback(co_await user_service->sendRequestCoro(request));
 }
-drogon::Task<> account::controller::pass_self(drogon::HttpRequestPtr request,
-			drogon::AdviceCallback callback, std::size_t target_id)
+drogon::Task<> account::controller::pass_self(drogon::HttpRequestPtr request, drogon::AdviceCallback callback, std::size_t target_id)
 {
 	using namespace api::response;
 	using api::operator""_s;
@@ -68,7 +66,6 @@ drogon::Task<> account::controller::pass_subscribe(drogon::HttpRequestPtr reques
 	using namespace api::response;
 	using api::operator""_s;
 
-	drogon::HttpClientPtr user_service = innerplane::users.get(request);
 	drogon::HttpClientPtr calendar_service = innerplane::calendar.get(request);
 	auto user = request->session()->get< data::user_t >("user");
 	if (!user.is_admin && (user.id != target_id))
@@ -80,88 +77,35 @@ drogon::Task<> account::controller::pass_subscribe(drogon::HttpRequestPtr reques
 	{
 		co_return callback(new_400("NOT_JSON"_s, "expected json array"_s));
 	}
-	std::vector< std::size_t > requested;
-	requested.reserve(json->size());
-	for (const Json::Value& i: *json)
-	{
-		if (!i.isUInt64())
-		{
-			co_return callback(new_400("WRONG_JSON_TYPE"_s, "expected lists to create/delete"_s));
-		}
-		requested.push_back(i.asUInt64());
-	}
-	std::sort(requested.begin(), requested.end());
-	if (requested.size() + user.subscribes.size() <= 0)
-	{
-		co_return callback(new_json(Json::arrayValue));
-	}
-
-	bool watch_add = (request->method() == drogon::Post) || (request->method() == drogon::Put);
-	bool watch_delete = request->method() == drogon::Put;
-	bool watch_overlap = request->method() == drogon::Delete;
-	Json::Value to_create{Json::arrayValue}, to_delete{Json::arrayValue};
-	std::vector< std::size_t > resulting_subs;
-	std::size_t req_i = 0;
-	for (std::size_t user_i = 0; user_i < user.subscribes.size(); user_i++)
-	{
-		bool add = true;
-		while (req_i < requested.size())
-		{
-			if (user.subscribes[user_i] < requested[req_i]) break;
-			if (user.subscribes[user_i] == requested[req_i++])
-			{
-				resulting_subs.push_back(user.subscribes[user_i]);
-				add = false;
-				if (watch_overlap) to_delete.append(user.subscribes[user_i]);
-				else break;
-			}
-			if (watch_add)
-			{
-				to_create.append(requested[req_i - 1]);
-			}
-		}
-		if (watch_delete && add) to_delete.append(user.subscribes[user_i]);
-	}
-	if (watch_add)
-	{
-		for (; req_i < requested.size(); req_i++)
-		{
-			to_create.append(requested[req_i]);
-		}
-	}
-	if (to_create.size() + to_delete.size() <= 0)
-	{
-		Json::Value response{Json::arrayValue};
-		for (std::size_t i: user.subscribes) response.append(i);
-		co_return callback(new_json(std::move(response)));
-	}
-
+	
 	Json::Value sub_req_json;
-	if (watch_add) sub_req_json["create"] = std::move(to_create);
-	if (watch_delete || watch_overlap) sub_req_json["delete"] = std::move(to_delete);
+	sub_req_json["create"] = Json::arrayValue;
+	sub_req_json["delete"] = Json::arrayValue;
+	
+	if (request->method() == drogon::Post || request->method() == drogon::Put) {
+		for (const Json::Value& i : *json) sub_req_json["create"].append(i);
+	}
+	if (request->method() == drogon::Put || request->method() == drogon::Delete) {
+		for (const Json::Value& i : *json) sub_req_json["delete"].append(i);
+	}
+
 	drogon::HttpRequestPtr sub_req = drogon::HttpRequest::newHttpJsonRequest(sub_req_json);
 	sub_req->setMethod(drogon::HttpMethod::Post);
 	sub_req->setPath("/api/sources/renew-subscribes/" + std::to_string(target_id));
+	
 	drogon::HttpResponsePtr sub_resp = co_await calendar_service->sendRequestCoro(sub_req);
-	const auto& sub_json = sub_resp->getJsonObject();
-	if ((sub_resp->statusCode() >= 200) && (sub_resp->statusCode() < 300) && sub_json && sub_json->isArray())
-	{
-		for (const Json::Value& i: *sub_json) resulting_subs.push_back(i.asUInt64());
-		user.subscribes = std::move(resulting_subs);
-
-		Json::Value sub_req_json{Json::arrayValue};
-		for (std::size_t i: user.subscribes) sub_req_json.append(i);
-		request->session()->modify< data::user_t >("user",
-					[user = std::move(user)](auto& u) {u = std::move(user);});
-		drogon::HttpRequestPtr sub_req = drogon::HttpRequest::newHttpJsonRequest(sub_req_json);
-		sub_req->setMethod(drogon::HttpMethod::Post);
-		sub_req->setPath("/api/users/" + std::to_string(target_id) + "/subscribe");
-		callback(co_await user_service->sendRequestCoro(sub_req));
+	
+	if (sub_resp->statusCode() >= 200 && sub_resp->statusCode() < 300) {
+		const auto& sub_json = sub_resp->getJsonObject();
+		if (sub_json && sub_json->isArray()) {
+			std::vector<std::size_t> new_subs;
+			for (const Json::Value& i : *sub_json) new_subs.push_back(i.asUInt64());
+			user.subscribes = std::move(new_subs);
+			request->session()->modify< data::user_t >("user", [user = std::move(user)](auto& u) { u = std::move(user); });
+		}
 	}
-	else
-	{
-		callback(sub_resp);
-	}
+	
+	callback(sub_resp);
 }
 
 account::controller::error account::controller::parse_user(const drogon::SessionPtr& session,
@@ -182,8 +126,8 @@ account::controller::error account::controller::parse_user(const drogon::Session
 	if (!err.isString()) return error::INTERNAL;
 	std::string errcode = err.asString();
 
-	if (err == "FAILED") return error::FAILED;
-	if (err == "MISSING_OBLIGATORY") return error::EMPTY_FIELDS;
+	if (errcode == "FAILED") return error::FAILED;
+	if (errcode == "MISSING_OBLIGATORY") return error::EMPTY_FIELDS;
 	return error::INTERNAL;
 }
 
@@ -195,21 +139,16 @@ drogon::Task<> account::controller::register_user(drogon::HttpRequestPtr request
 	std::string password_confirm = request->getParameter("password-confirm");
 
 	if (login.empty() || email.empty() || password.empty() || password_confirm.empty())
-	{
 		co_return callback(gen_register_page(request->session(), error::EMPTY_FIELDS));
-	}
+	
 	if (password != password_confirm)
-	{
 		co_return callback(gen_register_page(request->session(), error::PASSWORDS_MISMATCH));
-	}
+	
 	if (password.length() < 8)
-	{
 		co_return callback(gen_register_page(request->session(), error::TOO_SHORT_PW));
-	}
+	
 	if (!data::is_login(login) || !data::is_email(email))
-	{
 		co_return callback(gen_register_page(request->session(), error::WRONG_FORMAT));
-	}
 	
 	drogon::HttpClientPtr user_service = innerplane::users.get(request);
 	Json::Value json;
@@ -231,14 +170,8 @@ drogon::Task<> account::controller::register_user(drogon::HttpRequestPtr request
 void account::controller::register_page(const drogon::HttpRequestPtr& request, drogon::AdviceCallback&& callback)
 {
 	auto user = request->session()->getOptional< data::user_t >("user");
-	if (user)
-	{
-		callback(default_redirect(user->id));
-	}
-	else
-	{
-		callback(gen_register_page(request->session(), error::none));
-	}
+	if (user) callback(default_redirect(user->id));
+	else callback(gen_register_page(request->session(), error::none));
 }
 drogon::HttpResponsePtr account::controller::gen_register_page(const drogon::SessionPtr& session, error err)
 {
@@ -246,35 +179,15 @@ drogon::HttpResponsePtr account::controller::gen_register_page(const drogon::Ses
 	drogon::HttpStatusCode ret_code = drogon::HttpStatusCode::k400BadRequest;
 	switch (err)
 	{
-	case error::EMPTY_FIELDS:
-		data.insertAsString("error", "Не заполнены обязательные поля");
-		break;
-	case error::WRONG_FORMAT:
-		data.insertAsString("error", "Неверный формат логина или почты");
-		break;
-	case error::PASSWORDS_MISMATCH:
-		data.insertAsString("error", "Пароли не совпадают");
-		break;
-	case error::TOO_SHORT_PW:
-		data.insertAsString("error", "Слишком короткий пароль - минимальная длина - 8 символов");
-		break;
-	case error::FAILED:
-		data.insertAsString("error", "Пользователь с данным логином или email уже существует");
-		break;
-	case error::UNACCEPTABLE_PW:
-		data.insertAsString("error", "Ошибка в обработке пароля - введите иной");
-		break;
-	case error::INTERNAL:
-		ret_code = drogon::HttpStatusCode::k500InternalServerError;
-		data.insertAsString("error", "Внутренняя ошибка сервера");
-		break;
-		[[likely]]
-	case error::none:
-		ret_code = drogon::HttpStatusCode::k200OK;
-		break;
-	default:
-		data.insertAsString("error", "Неизвестная ошибка");
-		break;
+	case error::EMPTY_FIELDS: data.insertAsString("error", "Не заполнены обязательные поля"); break;
+	case error::WRONG_FORMAT: data.insertAsString("error", "Неверный формат логина или почты"); break;
+	case error::PASSWORDS_MISMATCH: data.insertAsString("error", "Пароли не совпадают"); break;
+	case error::TOO_SHORT_PW: data.insertAsString("error", "Слишком короткий пароль - минимальная длина - 8 символов"); break;
+	case error::FAILED: data.insertAsString("error", "Пользователь с данным логином или email уже существует"); break;
+	case error::UNACCEPTABLE_PW: data.insertAsString("error", "Ошибка в обработке пароля - введите иной"); break;
+	case error::INTERNAL: ret_code = drogon::HttpStatusCode::k500InternalServerError; data.insertAsString("error", "Внутренняя ошибка сервера"); break;
+	case error::none: ret_code = drogon::HttpStatusCode::k200OK; break;
+	default: data.insertAsString("error", "Неизвестная ошибка"); break;
 	}
 	data.insert("sessid", session->sessionId());
 	auto response = drogon::HttpResponse::newHttpViewResponse("views/account/register_p.csp", data);
@@ -286,14 +199,8 @@ drogon::Task<> account::controller::login(drogon::HttpRequestPtr request, drogon
 {
 	std::string login = request->getParameter("login");
 	std::string password = request->getParameter("password");
-	if (login.empty() || password.empty())
-	{
-		co_return callback(gen_login_page(request->session(), error::EMPTY_FIELDS));
-	}
-	if (!data::is_login(login))
-	{
-		co_return callback(gen_login_page(request->session(), error::WRONG_FORMAT));
-	}
+	if (login.empty() || password.empty()) co_return callback(gen_login_page(request->session(), error::EMPTY_FIELDS));
+	if (!data::is_login(login)) co_return callback(gen_login_page(request->session(), error::WRONG_FORMAT));
 
 	drogon::HttpClientPtr user_service = innerplane::users.get(request);
 	Json::Value json;
@@ -314,14 +221,8 @@ drogon::Task<> account::controller::login(drogon::HttpRequestPtr request, drogon
 void account::controller::login_page(const drogon::HttpRequestPtr& request, drogon::AdviceCallback&& callback)
 {
 	auto user = request->session()->getOptional< data::user_t >("user");
-	if (user)
-	{
-		callback(default_redirect(user->id));
-	}
-	else
-	{
-		callback(gen_login_page(request->session(), error::none));
-	}
+	if (user) callback(default_redirect(user->id));
+	else callback(gen_login_page(request->session(), error::none));
 }
 drogon::HttpResponsePtr account::controller::gen_login_page(const drogon::SessionPtr& session, error err)
 {
@@ -329,26 +230,12 @@ drogon::HttpResponsePtr account::controller::gen_login_page(const drogon::Sessio
 	drogon::HttpStatusCode ret_code = drogon::HttpStatusCode::k400BadRequest;
 	switch (err)
 	{
-	case error::EMPTY_FIELDS:
-		data.insertAsString("error", "Не заполнены обязательные поля");
-		break;
-	case error::WRONG_FORMAT:
-		data.insertAsString("error", "Неверный формат логина");
-		break;
-	case error::FAILED:
-		data.insertAsString("error", "Неверный логин или пароль");
-		break;
-	case error::INTERNAL:
-		ret_code = drogon::HttpStatusCode::k500InternalServerError;
-		data.insertAsString("error", "Внутренняя ошибка сервера");
-		break;
-	[[likely]]
-	case error::none:
-		ret_code = drogon::HttpStatusCode::k200OK;
-		break;
-	default:
-		data.insertAsString("error", "Неизвестная ошибка");
-		break;
+	case error::EMPTY_FIELDS: data.insertAsString("error", "Не заполнены обязательные поля"); break;
+	case error::WRONG_FORMAT: data.insertAsString("error", "Неверный формат логина"); break;
+	case error::FAILED: data.insertAsString("error", "Неверный логин или пароль"); break;
+	case error::INTERNAL: ret_code = drogon::HttpStatusCode::k500InternalServerError; data.insertAsString("error", "Внутренняя ошибка сервера"); break;
+	case error::none: ret_code = drogon::HttpStatusCode::k200OK; break;
+	default: data.insertAsString("error", "Неизвестная ошибка"); break;
 	}
 	data.insert("sessid", session->sessionId());
 	auto response = drogon::HttpResponse::newHttpViewResponse("views/account/login.csp", data);

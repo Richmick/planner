@@ -2,13 +2,11 @@
 
 #include <drogon/HttpController.h>
 #include "api_restful_Events_ctrlBase.h"
-
 #include "Events.h"
-
 
 namespace api::restful
 {
-	using drogon_model::sqlite3::Events;
+	using drogon_model::postgresql::Events;
 
 	class events_ctrl:
 		public drogon::HttpController< events_ctrl >,
