@@ -17,7 +17,7 @@ void api::gateway::proxy_plugin::initAndStart(const Json::Value& cfg)
 	if (!cfg.isObject())
 	{
 		LOG_FATAL << "Invalid proxy config: expected object";
-		std::abort();
+		std::exit(2);
 	}
 	Json::String route = cfg.get("route", "static").asString();
 	if (route == "static")
@@ -35,25 +35,25 @@ void api::gateway::proxy_plugin::initAndStart(const Json::Value& cfg)
 				else
 				{
 					LOG_FATAL << "Invalid proxy config: unknown service name: \"" << service << '"';
-					std::abort();
+					std::exit(2);
 				}
 			}
 			catch (const std::exception& e)
 			{
 				LOG_FATAL << "Invalid proxy config: " << e.what();
-				std::abort();
+				std::exit(2);
 			}
 		}
 		if (!users.exists())
 		{
 			LOG_FATAL << "Network missing obligatory service: \"users\"";
-			std::abort();
+			std::exit(2);
 		}
 	}
 	else
 	{
 		LOG_FATAL << "Invalid proxy config: unknown proxying policy: \"" << route << '"';
-		std::abort();
+		std::exit(2);
 	}
 	LOG_DEBUG << "finish parsing proxying plugin config";
 
@@ -91,7 +91,7 @@ void api::gateway::proxy_plugin::pre_route(const drogon::HttpRequestPtr& req,
 	}
 
 	std::string_view subpath{path.c_str() + 4, path.length() - 4};
-	if (subpath.starts_with("/profiles")) // no logged required, no result analysis
+	if (subpath.starts_with("/auth")) // no logged required, no result analysis
 	{
 		users.redirect(req, std::move(immediate_response), true);
 		return;
@@ -99,19 +99,15 @@ void api::gateway::proxy_plugin::pre_route(const drogon::HttpRequestPtr& req,
 	if (subpath.starts_with("/login")) // login and update session
 	{
 		if (req->method() != drogon::HttpMethod::Post)
-		{
 			return immediate_response(resp.k404_not_found);
-		}
 		req->setPassThrough(true);
 		users.get(req)->sendRequest(req, login_callback{ std::move(immediate_response), std::move(session) });
 		return;
 	}
-	if (subpath.starts_with("/logout")) // login and update session
+	if (subpath.starts_with("/logout"))
 	{
 		if (req->method() != drogon::HttpMethod::Post)
-		{
 			return immediate_response(resp.k404_not_found);
-		}
 		session->clear();
 		immediate_response(resp.k204_ok);
 		return;
@@ -122,9 +118,9 @@ void api::gateway::proxy_plugin::pre_route(const drogon::HttpRequestPtr& req,
 		immediate_response(resp.k401_unauthorized);
 		return;
 	}
-	std::string content = req->getHeader("Content-Type");
+	drogon::ContentType content = req->getContentType();
 	req->clearHeaders();
-	req->addHeader("Content-Type", content);
+	req->setContentTypeCode(content);
 	req->addHeader("user-id", std::to_string(user->id));
 	req->addHeader("user-name", user->name);
 
@@ -156,7 +152,7 @@ void api::gateway::proxy_plugin::login_callback::operator()(drogon::ReqResult re
 		{
 			std::optional user = resp->as< std::optional< profile > >();
 			if (!user) return callback(responses::instance().k500_internal);
-			session->modify([&user](auto map){ map["profile"] = user; });
+			session->modify([&user](auto& map){ map["profile"] = *user; });
 		}
 		resp->setPassThrough(true);
 		callback(resp);

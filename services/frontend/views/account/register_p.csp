@@ -16,7 +16,7 @@
 </head>
 <body>
 	<h2>Вход в аккаунт</h2>
-	<form id="register-form" action="/api/profiles/register" method="POST">
+	<form id="register-form" action="/api/auth/logup" method="POST">
 		<input type="hidden" name="sessid" id="sessid" value="<%c++   $$ << sessid;   %>">
 
 		<label>

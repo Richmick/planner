@@ -111,3 +111,8 @@ Json::StaticString api::operator""_s(const char* str, size_t)
 {
 	return Json::StaticString{str};
 }
+std::string api::utc_now()
+{
+	using namespace std::chrono;
+	return std::format("{:%FT%TZ}", time_point_cast< milliseconds >(utc_clock::now()));
+}
