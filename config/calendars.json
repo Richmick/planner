@@ -11,7 +11,7 @@
 		{
 			"name": "default",
 			"rdbms": "sqlite3",
-			"filename":"./calendar.sqlite",
+			"filename":"./db/calendar.sqlite",
 			"dbname": "calendar",
 			"client_encoding": "",
 			"number_of_connections": 1,
