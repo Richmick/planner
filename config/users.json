@@ -51,6 +51,27 @@
 		"enabled_compressed_request": false,
 		"enable_request_stream": false
 	},
-	"plugins": [],
+	"plugins": [
+		{
+			"name": "drogon::plugin::AccessLogger",
+			"dependencies": [],
+			"config": {
+				"use_spdlog": false,
+				//"log_path": "./logs/",
+				"log_format": "",
+				"log_file": "users-access.log",
+				"log_size_limit": 0,
+				"use_local_time": true,
+				"log_index": 0
+			}
+		},
+		{
+			"name": "api::plugins::health_check",
+			"dependencies": [],
+			"config": {
+				"url": "/api/users/status"
+			}
+		}
+	],
 	"custom_config": {}
 }

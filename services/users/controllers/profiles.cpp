@@ -60,6 +60,7 @@ drogon::Task<> api::users::ctrl::profiles::login(api::request_t req, api::respon
 	drogon::orm::Result req_res;
 	try
 	{
+		LOG_INFO << "User \"" << body->nickname << "\" trying to log in";
 		req_res = co_await sql_client->execSqlCoro("SELECT id, password FROM profiles WHERE nickname = $1;", body->nickname);
 	}
 	catch (const drogon::orm::DrogonDbException& e)
@@ -80,10 +81,12 @@ drogon::Task<> api::users::ctrl::profiles::login(api::request_t req, api::respon
 			Json::Value res;
 			res["id"] = req_res.front()[0].as< std::int64_t >();
 			res["nickname"] = body->nickname;
+			LOG_INFO << "User \"" << body->nickname << "\" successfully logged in";
 			callback(drogon::HttpResponse::newHttpJsonResponse(std::move(res)));
 			co_return;
 		}
 	}
+	LOG_INFO << "User \"" << body->nickname << "\" failed to log in";
 	callback(api::response::new_400("FAILED"_s, "wrong login or password"_s));
 }
 drogon::Task<> api::users::ctrl::profiles::create_one(api::request_t req, api::response_callback callback)
@@ -97,6 +100,7 @@ drogon::Task<> api::users::ctrl::profiles::create_one(api::request_t req, api::r
 	drogon::orm::Result req_res;
 	try
 	{
+		LOG_INFO << "Trying to register user \"" << body->nickname << "\" with email " << body->email;
 		req_res = co_await sql_client->execSqlCoro("INSERT INTO profiles(nickname,email,password)"
 					"VALUES($1,$2,$3);", body->nickname, body->email, *pw_hash);
 	}
@@ -114,6 +118,7 @@ drogon::Task<> api::users::ctrl::profiles::create_one(api::request_t req, api::r
 		LOG_ERROR << "Database error: " << e.base().what();
 		co_return callback(resp.k500_db_error);
 	}
+	LOG_INFO << "Registered \"" << body->nickname << "\" with email " << body->email;
 	co_return callback(resp.k204_ok);
 }
 

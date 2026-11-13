@@ -10,6 +10,9 @@ include(set_language)
 
 # Parameters
 
+option(PLANNER_BUILD_INTEGRATION_TESTS "Build planner application tests" ON)
+option(PLANNER_BUILD_UNIT_TESTS "Build planner unit tests" ON)
+
 set(PLANNER_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/service-executables)
 set(PLANNER_CONFIG_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/config)
 
@@ -33,6 +36,10 @@ add_subdirectory(services/users)
 #add_subdirectory(services/calendars)
 add_subdirectory(services/scheduler)
 #add_subdirectory(services/notifier)
+
+if (PLANNER_BUILD_INTEGRATION_TESTS)
+	add_subdirectory("tests/load-test/loader")
+endif()
 
 add_custom_target("build-all" DEPENDS
 	planner-gateway
