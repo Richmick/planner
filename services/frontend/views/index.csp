@@ -1,3 +1,5 @@
 <%layout views/main_layout.csp %>
 
 <h1>Планер-календарь</h1>
+
+<p><a href="/calendar">Открыть календарь</a></p>

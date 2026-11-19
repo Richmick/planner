@@ -83,3 +83,54 @@ main {
 .calendar_events td {
 	padding: 0px 30px;
 }
+
+.calendar-page {
+	max-width: 1100px;
+	margin: 0 auto;
+}
+.calendar-form {
+	max-width: 100%;
+	margin: 1rem 0;
+}
+.calendar-form-row {
+	display: flex;
+	align-items: end;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+}
+.calendar-form-row label {
+	font-weight: 600;
+}
+.calendar-form-row input {
+	flex: 1 1 180px;
+	min-width: 140px;
+}
+.calendar-form-row button {
+	width: auto;
+	min-width: 130px;
+}
+.calendar-section {
+	margin: 2rem 0;
+}
+.calendar-list, .event-list {
+	display: grid;
+	gap: 0.75rem;
+}
+.calendar-item, .event-item {
+	padding: 1rem;
+	border: 1px solid #d1d5db;
+	border-radius: 8px;
+	background: #fff;
+}
+.event-item h3, .event-item p {
+	margin: 0.25rem 0;
+}
+.event-status {
+	display: inline-block;
+	margin-top: 0.5rem;
+	font-size: 0.875rem;
+	font-weight: 600;
+}
+.secondary-button {
+	background: #475569;
+}

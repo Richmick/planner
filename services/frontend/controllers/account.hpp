@@ -13,6 +13,7 @@ namespace api::frontend::ctrl
 		static void initPathRouting();
 
 		void index(const api::request_t& req, api::response_callback&& callback);
+		void calendar(const api::request_t& req, api::response_callback&& callback);
 		void login(const api::request_t& req, api::response_callback&& callback);
 		void register_p(const api::request_t& req, api::response_callback&& callback);
 
