@@ -1,0 +1,10 @@
+if(NOT DEFINED SOURCE OR NOT DEFINED DESTINATION)
+    message(FATAL_ERROR "SOURCE and DESTINATION must be provided")
+endif()
+
+if(NOT EXISTS "${DESTINATION}")
+    get_filename_component(DESTINATION_DIRECTORY "${DESTINATION}" DIRECTORY)
+    file(MAKE_DIRECTORY "${DESTINATION_DIRECTORY}")
+    configure_file("${SOURCE}" "${DESTINATION}" COPYONLY)
+    message(STATUS "Initialized local database: ${DESTINATION}")
+endif()

@@ -7,7 +7,14 @@ project("planner-users"
 )
 
 find_package(Drogon CONFIG REQUIRED)
-find_package(libsodium CONFIG REQUIRED)
+find_package(libsodium CONFIG QUIET)
+if (TARGET libsodium::libsodium)
+	set(sodium_target libsodium::libsodium)
+else()
+	find_package(PkgConfig REQUIRED)
+	pkg_check_modules(Sodium REQUIRED IMPORTED_TARGET libsodium)
+	set(sodium_target PkgConfig::Sodium)
+endif()
 string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}" is_top_level_project)
 if (is_top_level_project)
 	add_subdirectory("../../common/")
@@ -36,7 +43,7 @@ set_target_properties("${PROJECT_NAME}" PROPERTIES
 target_include_directories("${PROJECT_NAME}" PRIVATE
 	"${CMAKE_CURRENT_SOURCE_DIR}"
 )
-target_link_libraries("${PROJECT_NAME}" PRIVATE Drogon::Drogon libsodium::libsodium plannerlib)
+target_link_libraries("${PROJECT_NAME}" PRIVATE Drogon::Drogon ${sodium_target} plannerlib)
 target_sources("${PROJECT_NAME}" PRIVATE
 	"main.cpp"
 

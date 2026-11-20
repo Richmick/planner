@@ -3,7 +3,7 @@ jsoncpp/1.9.4
 zlib/1.2.13
 gtest/1.10.0
 sqlite3/3.40.1
-libpq/14.24
+#libpq/14.24
 openssl/1.1.1t
 hiredis/1.0.0
 brotli/1.0.9
@@ -11,5 +11,4 @@ brotli/1.0.9
 libsodium/1.0.22
 
 [generators]
-CMakeDeps
 CMakeToolchain

@@ -1,42 +1,38 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
+    profiles: ["postgres"]
     environment:
-      POSTGRES_DB: planner
-      POSTGRES_USER: planner
-      POSTGRES_PASSWORD: planner
-      TZ: Europe/Moscow
+      POSTGRES_DB: calendars
+      POSTGRES_USER: calendars
+      POSTGRES_PASSWORD: calendars
+      TZ: UTC
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U planner -d planner"]
+      test: ["CMD-SHELL", "pg_isready -U calendars -d calendars"]
       interval: 5s
       timeout: 5s
       retries: 20
     volumes:
-      - planner-postgres:/var/lib/postgresql/data
-      - ./services/calendars/sql/001_schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+      - "calendars-postgres:/var/lib/postgresql"
+      - "./services/calendars/sql/001_schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro"
 
   planner:
-    image: drogonframework/drogon:v1.9.14
+    build: "./docker"
     tty: true
     working_dir: /app/build
     environment:
-      TZ: Europe/Moscow
-    depends_on:
-      postgres:
-        condition: service_healthy
+      TZ: UTC
     ports:
       - "443:443"
     volumes:
-      - ./config:/app/config
-      - ./.ssl:/app/.ssl
-      - ./services:/app/services
-      - ./external:/app/external
-      - ./common:/app/common
-      - ./cmake:/app/cmake
-      - ./CMakeLists.txt:/app/CMakeLists.txt
-      - ./conanfile.txt:/app/conanfile.txt
-      - ./conanfile_lib.txt:/app/conanfile_lib.txt
-      - ./start-builded.sh:/app/start-builded.sh
+      - "./config:/app/config"
+      - "./.ssl:/app/.ssl"
+      - "./services:/app/services"
+      - "./external:/app/external"
+      - "./common:/app/common"
+      - "./cmake:/app/cmake"
+      - "./CMakeLists.txt:/app/CMakeLists.txt"
+      - "./start-builded.sh:/app/start-builded.sh"
 
 volumes:
-  planner-postgres:
+  calendars-postgres:

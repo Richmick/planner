@@ -1,60 +1,97 @@
 {
-  "listeners": [
-    {
-      "address": "0.0.0.0",
-      "port": 5702
-    }
-  ],
-  "db_clients": [
-    {
-      "name": "default",
-      "rdbms": "postgresql",
-      "host": "postgres",
-      "port": 5432,
-      "dbname": "planner",
-      "user": "planner",
-      "passwd": "planner",
-      "client_encoding": "UTF8",
-      "number_of_connections": 6,
-      "timeout": 10.0
-    }
-  ],
-  "app": {
-    "number_of_threads": 2,
-    "max_connections": 100000,
-    "max_connections_per_ip": 0,
-    "json_parser_stack_limit": 1000,
-    "enable_unicode_escaping_in_json": false,
-    "log": {
-      "use_spdlog": false,
-      "logfile_base_name": "",
-      "log_size_limit": 100000000,
-      "max_files": 0,
-      "log_level": "INFO",
-      "display_local_time": true
-    },
-    "run_as_daemon": false,
-    "handle_sig_term": true,
-    "relaunch_on_error": false,
-    "idle_connection_timeout": 60,
-    "server_header_field": "",
-    "enable_server_header": true,
-    "enable_date_header": true,
-    "keepalive_requests": 0,
-    "pipelining_requests": 0,
-    "client_max_body_size": "1M",
-    "client_max_memory_body_size": "64K",
-    "client_max_websocket_message_size": "128K",
-    "reuse_port": false,
-    "enabled_compressed_request": false,
-    "enable_request_stream": false
-  },
-  "plugins": [],
-  "custom_config": {
-    "ruz": {
-      "base_url": "https://ruz.spbstu.ru",
-      "daily_sync_hour": 5,
-      "refresh_before_minutes": 30
-    }
-  }
+	"listeners":
+	[
+		{
+			"address": "127.0.0.1",
+			"port": 5702
+		}
+	],
+	"db_clients":
+	[
+		{
+			"name": "default",
+			"rdbms": "sqlite3",
+			//"rdbms": "postgresql",
+			"filename": "./db/calendars.sqlite",
+			//"host": "postgres",
+			//"port": 5432,
+			//"dbname": "calendars",
+			//"user": "calendars",
+			//"passwd": "calendars",
+			//"client_encoding": "UTF8",
+			"initialization_queries": ["PRAGMA foreign_keys = ON"],
+			"number_of_connections": 1,
+			"timeout": 10.0
+		}
+	],
+	"app":
+	{
+		"number_of_threads": 2,
+		"max_connections": 100000,
+		"max_connections_per_ip": 0,
+		"json_parser_stack_limit": 1000,
+		"enable_unicode_escaping_in_json": false,
+		"log":
+		{
+			"use_spdlog": false,
+			//"log_path": "./", // commented = stdout
+			"logfile_base_name": "",
+			"log_size_limit": 100000000,
+			"max_files": 0,
+			"log_level": "DEBUG",
+			"display_local_time": false
+		},
+		"run_as_daemon": false,
+		"handle_sig_term": true,
+		"relaunch_on_error": false,
+		"idle_connection_timeout": 60,
+		"server_header_field": "",
+		"enable_server_header": true,
+		"enable_date_header": true,
+		"keepalive_requests": 0,
+		"pipelining_requests": 0,
+		"client_max_body_size": "1M",
+		"client_max_memory_body_size": "64K",
+		"client_max_websocket_message_size": "128K",
+		"reuse_port": false,
+		"enabled_compressed_request": false,
+		"enable_request_stream": false
+	},
+	"plugins":
+	[
+		{
+			"name": "api::calendars::ruz::scheduler",
+			"dependencies": [],
+			"config": {}
+		},
+		{
+			"name": "api::calendars::outbox_relay",
+			"dependencies": [],
+			"config":
+			{
+				"retry_minutes": 5
+			}
+		}
+	],
+	"custom_config":
+	{
+		"sources":
+		{
+			"ruz":
+			{
+				"base_url": "https://ruz.spbstu.ru",
+				"timezone": "Europe/Moscow",
+				"sync":
+				{
+					"static": [5, 18],
+					"pre_lesson": [0.5]
+				},
+				"min_request_interval_seconds": 1,
+				"request_timeout_seconds": 10,
+				"retry_interval_seconds": 30,
+				"sync_on_startup": true,
+				"sync_days": 7
+			}
+		}
+	}
 }

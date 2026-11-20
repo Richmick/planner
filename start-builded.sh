@@ -3,10 +3,10 @@
 set -e
 cd "/app/build/service-executables"
 
-./planner-users &
-./planner-calendars &
-./planner-frontend &
-sleep 2
-./planner-gateway &
+"./planner-gateway" &
+"./planner-users" &
+"./planner-frontend" &
+"./planner-calendars" &
 
 wait
+echo "all services exited"
