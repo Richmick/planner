@@ -88,6 +88,16 @@ main {
 	max-width: 1100px;
 	margin: 0 auto;
 }
+.calendar-columns {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(16rem, 19rem);
+	align-items: start;
+	gap: 2rem;
+}
+.calendar-columns h2 {
+	margin-top: 0;
+	font-size: 1.25rem;
+}
 .calendar-form {
 	max-width: 100%;
 	margin: 1rem 0;
@@ -101,16 +111,37 @@ main {
 .calendar-form-row label {
 	font-weight: 600;
 }
-.calendar-form-row input {
+.calendar-form-row input, .calendar-form-row select {
 	flex: 1 1 180px;
-	min-width: 140px;
+	min-width: 0;
+}
+.calendar-form-row input, .calendar-form-row select, .calendar-page button {
+	box-sizing: border-box;
+	padding: 0.55rem 0.75rem;
+	border: 1px solid #94a3b8;
+	border-radius: 6px;
+	font: inherit;
+}
+.calendar-page button {
+	border-color: transparent;
+	background: #0039a6;
+	color: #fff;
+	cursor: pointer;
+}
+.calendar-page button:disabled {
+	opacity: 0.65;
+	cursor: default;
+}
+.calendar-page :is(button, input, select, a, .notification-list):focus-visible {
+	outline: 2px solid #0039a6;
+	outline-offset: 2px;
 }
 .calendar-form-row button {
 	width: auto;
 	min-width: 130px;
 }
 .calendar-section {
-	margin: 2rem 0;
+	margin: 0 0 2rem;
 }
 .calendar-list, .event-list {
 	display: grid;
@@ -122,8 +153,11 @@ main {
 	border-radius: 8px;
 	background: #fff;
 }
-.event-item h3, .event-item p {
+.calendar-item h3, .calendar-item p, .event-item h3, .event-item p {
 	margin: 0.25rem 0;
+}
+.calendar-item a {
+	color: #0039a6;
 }
 .event-status {
 	display: inline-block;
@@ -131,6 +165,60 @@ main {
 	font-size: 0.875rem;
 	font-weight: 600;
 }
-.secondary-button {
+.calendar-page .secondary-button {
 	background: #475569;
+}
+.calendar-feedback {
+	padding: 0.65rem 0.75rem;
+	border-radius: 6px;
+	background: #eef4ff;
+	color: #173568;
+}
+.calendar-feedback.error {
+	background: #fff1f1;
+	color: #8b1c1c;
+}
+.calendar-notifications {
+	min-width: 0;
+	padding: 1rem;
+	border: 1px solid #d1d5db;
+	border-radius: 8px;
+	background: #fff;
+}
+.calendar-notifications h2 {
+	margin-bottom: 0.25rem;
+}
+.notification-note {
+	margin: 0 0 0.75rem;
+	color: #475569;
+	font-size: 0.875rem;
+}
+.notification-list {
+	max-height: 16rem;
+	overflow-y: auto;
+	scrollbar-gutter: stable;
+	margin: 0;
+	padding: 0 0.5rem 0 0;
+	list-style: none;
+}
+.notification-list li {
+	padding: 0.75rem 0;
+	border-top: 1px solid #e2e8f0;
+}
+.notification-list h3, .notification-list p {
+	margin: 0 0 0.4rem;
+	font-size: 0.9rem;
+}
+.notification-list .calendar-feedback {
+	margin-top: 0.5rem;
+}
+
+@media (max-width: 760px) {
+	main:has(.calendar-page) {
+		margin: 1rem;
+	}
+	.calendar-columns {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 1rem;
+	}
 }
