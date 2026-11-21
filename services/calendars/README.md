@@ -6,6 +6,8 @@ Run `planner-calendars` from `build/service-executables`. The default config lis
 
 The seed uses [001_schema.sqlite.sql](sql/001_schema.sqlite.sql). For an older runtime database with the `sources` table and no calendar subscriptions, keep that file as a backup and copy the current seed to `build/service-executables/db/calendars.sqlite` before starting the service.
 
+To upgrade a database that already has the `calendars` table and predates the access columns, apply [004_migrate_calendar_access.sqlite.sql](sql/004_migrate_calendar_access.sqlite.sql) once. Run the migration with the service stopped. It keeps existing calendar IDs, subscriptions and events. Enable `PRAGMA foreign_keys = ON` on connections to this database. The default service config sets it when opening the connection.
+
 ## PostgreSQL
 
 Use PostgreSQL 18 or later for `uuidv7()` and a Drogon build with PostgreSQL ORM support.
@@ -24,6 +26,8 @@ Apply the schema from the repository root.
 psql -h 127.0.0.1 -U calendars -d calendars -v ON_ERROR_STOP=1 -f services/calendars/sql/001_schema.sql
 ```
 
+For an existing PostgreSQL database whose `calendars` primary key is `id`, rerun the same command to add the access columns and table.
+
 For Docker, start the optional database and wait for its health check.
 
 ```sh
@@ -33,6 +37,14 @@ docker compose --profile postgres up -d --build --wait postgres planner
 PostgreSQL applies the schema automatically on first initialization of the `calendars-postgres` volume. To move an existing database from PostgreSQL 16, back it up with `pg_dump` and restore it to an empty database on PostgreSQL 18. Apply `sql/000_migrate_postgresql.sql` and then `sql/001_schema.sql` to the restored database before starting calendars.
 
 In the runtime `config/calendars.json`, comment out the SQLite `rdbms` and `filename`, uncomment the PostgreSQL settings, and set the credentials. Use `127.0.0.1` for a native server or `postgres` from the Planner container. An existing database with the previous Calendars schema also needs the migration before applying the new schema.
+
+## Calendar access
+
+- `public` calendars allow reading with no grant. `private` calendars are visible only to their owner. `protected` calendars are visible to the owner and users with a grant.
+- `calendars.owner_id` identifies the owner. Private and protected calendars require one. Existing calendars remain public with no owner assigned.
+- `calendar_access` stores one grant per protected calendar and user. `r` is read, `w` includes editing, and `s` includes managing grants. Ownership comes from `owner_id`. Changing a protected calendar to a different visibility clears its grants.
+
+Subscriptions still store which calendars a user follows. The current API reads subscriptions without evaluating visibility or grants, so enabling restricted calendars for users depends on the backend access checks.
 
 ## RUZ
 

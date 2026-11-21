@@ -16,6 +16,40 @@ CREATE TABLE IF NOT EXISTS calendars
 	UNIQUE (type_id, external_id)
 );
 
+-- Calendars created by earlier versions have no recorded owner.
+ALTER TABLE calendars
+	ADD COLUMN IF NOT EXISTS visibility VARCHAR(9) NOT NULL DEFAULT 'public'
+		CHECK (visibility IN ('public', 'private', 'protected')),
+	ADD COLUMN IF NOT EXISTS owner_id BIGINT
+		CHECK (owner_id > 0)
+		CONSTRAINT calendars_visibility_requires_owner
+			CHECK (visibility = 'public' OR owner_id IS NOT NULL);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_calendars_id_visibility ON calendars (id, visibility);
+
+CREATE TABLE IF NOT EXISTS calendar_access
+(
+	calendar_id BIGINT NOT NULL,
+	user_id BIGINT NOT NULL CHECK (user_id > 0),
+	access TEXT NOT NULL CHECK (access IN ('r', 'w', 's')),
+	visibility VARCHAR(9) GENERATED ALWAYS AS ('protected') STORED NOT NULL,
+	PRIMARY KEY (calendar_id, user_id),
+	FOREIGN KEY (calendar_id, visibility) REFERENCES calendars (id, visibility) ON DELETE CASCADE
+);
+
+CREATE OR REPLACE FUNCTION clear_calendar_access() RETURNS TRIGGER
+LANGUAGE plpgsql AS $$
+BEGIN
+	DELETE FROM calendar_access WHERE calendar_id = OLD.id;
+	RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE TRIGGER calendar_no_longer_protected
+BEFORE UPDATE ON calendars FOR EACH ROW
+WHEN (OLD.visibility = 'protected' AND NEW.visibility <> 'protected')
+EXECUTE FUNCTION clear_calendar_access();
+
 CREATE TABLE IF NOT EXISTS events
 (
 	id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,

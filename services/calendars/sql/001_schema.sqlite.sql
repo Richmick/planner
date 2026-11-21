@@ -14,7 +14,22 @@ CREATE TABLE IF NOT EXISTS calendars
 	external_id TEXT NOT NULL,
 	metadata TEXT NOT NULL DEFAULT '{}',
 	created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+	visibility TEXT NOT NULL DEFAULT 'public' CHECK(visibility IN ('public', 'private', 'protected')),
+	owner_id INTEGER CHECK(owner_id IS NULL OR (typeof(owner_id) = 'integer' AND owner_id > 0))
+		CHECK(visibility = 'public' OR owner_id IS NOT NULL),
 	UNIQUE (type_id, external_id)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_calendars_id_visibility ON calendars (id, visibility);
+
+CREATE TABLE IF NOT EXISTS calendar_access
+(
+	calendar_id INTEGER NOT NULL,
+	user_id INTEGER NOT NULL CHECK(typeof(user_id) = 'integer' AND user_id > 0),
+	access TEXT NOT NULL CHECK(access IN ('r', 'w', 's')),
+	visibility TEXT GENERATED ALWAYS AS ('protected') STORED,
+	PRIMARY KEY (calendar_id, user_id),
+	FOREIGN KEY (calendar_id, visibility) REFERENCES calendars (id, visibility) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS events
@@ -79,6 +94,13 @@ CREATE TABLE IF NOT EXISTS outbox_events
 CREATE INDEX IF NOT EXISTS idx_events_calendar ON events (calendar_id, finish_before);
 CREATE INDEX IF NOT EXISTS idx_overrides_user ON event_overrides (user_id, updated_at);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_calendar ON subscriptions (calendar_id);
+
+CREATE TRIGGER IF NOT EXISTS calendar_access_on_visibility_change
+BEFORE UPDATE OF visibility ON calendars
+WHEN OLD.visibility = 'protected' AND NEW.visibility <> 'protected'
+BEGIN
+	DELETE FROM calendar_access WHERE calendar_id = OLD.id;
+END;
 
 INSERT INTO calendar_types (id, description)
 VALUES ('ruz', 'Расписание учебных групп СПбПУ')
