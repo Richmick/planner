@@ -1,93 +1,135 @@
 <%layout views/main_layout.csp %>
 
+<link rel="stylesheet" href="/schedule.css">
+
 <section class="calendar-page">
-	<h1>Расписание</h1>
+	<div class="calendar-heading">
+		<h1>Расписание</h1>
+		<a class="button button-subtle heading-link" href="#schedule-task-name">+ Задача</a>
+	</div>
 
-	<div class="calendar-columns">
-		<div>
-			<section class="calendar-section">
-				<h2>Открыть календарь</h2>
-				<form id="open-calendar-form" class="calendar-form">
-					<div class="calendar-form-row">
-						<label for="calendar-id">ID календаря</label>
-						<input id="calendar-id" name="calendar_id" inputmode="numeric" pattern="[1-9][0-9]*" required>
-						<button type="submit">Открыть</button>
+	<div class="planner-workspace">
+		<div class="planner-main">
+			<section class="schedule-panel" aria-labelledby="schedule-period">
+				<div class="schedule-toolbar">
+					<div class="schedule-navigation">
+						<div class="schedule-pager" aria-label="Навигация по датам">
+							<button id="schedule-prev" class="icon-button" type="button" aria-label="Предыдущий период">‹</button>
+							<button id="schedule-next" class="icon-button" type="button" aria-label="Следующий период">›</button>
+						</div>
+						<button id="schedule-today" class="button-subtle" type="button">Сегодня</button>
+						<h2 id="schedule-period" aria-live="polite">Текущая неделя</h2>
 					</div>
-				</form>
-				<p id="calendar-detail-status" role="status" hidden></p>
-				<p id="calendar-detail-error" class="calendar-feedback error" role="alert" hidden></p>
-				<article id="calendar-details" class="calendar-item" hidden></article>
+					<div class="schedule-switch" aria-label="Вид расписания">
+						<button id="schedule-week" type="button" aria-pressed="true">Неделя</button>
+						<button id="schedule-day" type="button" aria-pressed="false">День</button>
+					</div>
+				</div>
 
-				<form id="calendar-access-request" class="calendar-form" hidden>
-					<div class="calendar-form-row">
+				<p id="schedule-status" class="feedback schedule-status" role="status" hidden></p>
+				<div id="schedule-scroll" class="schedule-scroll" tabindex="0" role="region" aria-label="Часы и дни расписания">
+					<div id="schedule-grid" class="schedule-grid"></div>
+				</div>
+			</section>
+
+			<details class="planner-disclosure schedule-filter">
+				<summary>Поиск задач по датам</summary>
+				<div class="planner-disclosure-body">
+					<form id="date-form" class="planner-form">
+						<div class="planner-form-row">
+							<label>С <input id="date-from" name="from" type="date" required></label>
+							<label>По <input id="date-to" name="to" type="date" required></label>
+							<button type="submit">Показать</button>
+							<button id="active-events" class="button-subtle" type="button">Все активные</button>
+						</div>
+					</form>
+					<p id="calendar-error" class="calendar-feedback error" role="alert" hidden></p>
+					<div id="event-list" class="event-list" aria-live="polite"></div>
+				</div>
+			</details>
+		</div>
+
+		<aside class="planner-sidebar" aria-label="Задачи и календари">
+			<section class="pool-panel" aria-labelledby="pool-title">
+				<div class="pool-heading">
+					<h2 id="pool-title">Пул задач</h2>
+					<span id="schedule-pool-count" class="pool-count" aria-label="Задач в пуле">0</span>
+				</div>
+				<form id="schedule-task-form" class="quick-task">
+					<input id="schedule-task-name" name="task" placeholder="Название задачи" aria-label="Название задачи" maxlength="160" required>
+					<button class="button-primary icon-button" type="submit" aria-label="Добавить задачу">+</button>
+				</form>
+				<div id="schedule-pool-list" class="schedule-pool-list"></div>
+				<p class="pool-hint">Перетащите задачу на нужное время или нажмите на неё. Расстановка сохраняется в этом браузере.</p>
+			</section>
+
+			<details id="calendar-tools" class="planner-disclosure">
+				<summary>Календари</summary>
+				<div class="planner-disclosure-body">
+					<div id="calendar-list" class="calendar-list"></div>
+					<form id="calendar-form" class="planner-form">
+						<label for="group-name">Добавить учебную группу</label>
+						<div class="planner-form-row inline-fields">
+							<input id="group-name" name="group" placeholder="5130904/40101" required>
+							<button class="button-subtle" type="submit">Добавить</button>
+						</div>
+					</form>
+					<p id="calendar-list-error" class="calendar-feedback error" role="alert" hidden></p>
+					<form id="open-calendar-form" class="planner-form">
+						<label for="calendar-id">Открыть по ID</label>
+						<div class="planner-form-row inline-fields">
+							<input id="calendar-id" name="calendar_id" inputmode="numeric" pattern="[1-9][0-9]*" placeholder="ID календаря" required>
+							<button class="button-subtle" type="submit">Открыть</button>
+						</div>
+					</form>
+					<p id="calendar-detail-status" class="calendar-feedback" role="status" hidden></p>
+					<p id="calendar-detail-error" class="calendar-feedback error" role="alert" hidden></p>
+					<article id="calendar-details" class="calendar-item" hidden></article>
+
+					<form id="calendar-access-request" class="planner-form" hidden>
 						<label for="requested-access">Уровень доступа</label>
 						<select id="requested-access" name="access">
 							<option value="r">Чтение</option>
 							<option value="w">Редактирование</option>
 							<option value="s">Управление доступом</option>
 						</select>
-						<button type="submit">Запросить доступ</button>
-					</div>
-				</form>
-				<p id="access-request-status" class="calendar-feedback" role="status" hidden></p>
-			</section>
-
-			<section class="calendar-section">
-				<h2>Мои календари</h2>
-				<form id="calendar-form" class="calendar-form">
-					<label for="group-name">Учебная группа</label>
-					<div class="calendar-form-row">
-						<input id="group-name" name="group" type="text" placeholder="5130904/40101" required>
-						<button type="submit">Добавить группу</button>
-					</div>
-				</form>
-				<div id="calendar-list" class="calendar-list"></div>
-			</section>
-
-			<section class="calendar-section">
-				<h2>Задачи по датам</h2>
-				<form id="date-form" class="calendar-form">
-					<div class="calendar-form-row">
-						<label for="date-from">С</label>
-						<input id="date-from" name="from" type="date" required>
-						<label for="date-to">По</label>
-						<input id="date-to" name="to" type="date" required>
-						<button type="submit">Показать</button>
-						<button id="active-events" type="button" class="secondary-button">Активные</button>
-					</div>
-				</form>
-				<div id="calendar-error" class="calendar-feedback error" role="alert" hidden></div>
-				<div id="event-list" class="event-list"></div>
-			</section>
-		</div>
-
-		<aside class="calendar-notifications" aria-labelledby="notification-title">
-			<h2 id="notification-title">Уведомления</h2>
-			<p class="notification-note">Пример уведомлений</p>
-			<ul class="notification-list" tabindex="0" aria-labelledby="notification-title">
-				<li>
-					<h3>Запрос на чтение</h3>
-					<p>Пользователь №42 запрашивает доступ к календарю №102.</p>
-					<form id="notification-grant" data-calendar-id="102" data-user-id="42" data-access="r">
-						<button type="submit">Предоставить доступ</button>
+						<button class="button-primary" type="submit">Запросить доступ</button>
 					</form>
-					<p id="grant-status" class="calendar-feedback" role="status" hidden></p>
-				</li>
-				<li>
-					<h3>Запрос на редактирование</h3>
-					<p>Пользователь №58 запрашивает доступ к календарю №109.</p>
-				</li>
-				<li>
-					<h3>Доступ предоставлен</h3>
-					<p>Пользователь №31 может читать календарь №101.</p>
-				</li>
-				<li>
-					<h3>Доступ отозван</h3>
-					<p>Пользователь №19 потерял доступ к календарю №106.</p>
-				</li>
-			</ul>
+					<p id="access-request-status" class="calendar-feedback" role="status" hidden></p>
+				</div>
+			</details>
+
+			<details id="notification-tools" class="planner-disclosure">
+				<summary>Уведомления</summary>
+				<div class="planner-disclosure-body">
+					<p class="notification-note">Пример уведомлений</p>
+					<ul class="notification-list" tabindex="0" aria-label="Уведомления">
+						<li>
+							<h3>Запрос на чтение</h3>
+							<p>Пользователь №42 запрашивает доступ к календарю №102.</p>
+							<form id="notification-grant" data-calendar-id="102" data-user-id="42" data-access="r">
+								<button type="submit">Предоставить доступ</button>
+							</form>
+							<p id="grant-status" class="calendar-feedback" role="status" hidden></p>
+						</li>
+						<li>
+							<h3>Запрос на редактирование</h3>
+							<p>Пользователь №58 запрашивает доступ к календарю №109.</p>
+						</li>
+						<li>
+							<h3>Доступ предоставлен</h3>
+							<p>Пользователь №31 может читать календарь №101.</p>
+						</li>
+						<li>
+							<h3>Доступ отозван</h3>
+							<p>Пользователь №19 потерял доступ к календарю №106.</p>
+						</li>
+					</ul>
+				</div>
+			</details>
 		</aside>
 	</div>
 </section>
 
+<script src="/schedule.js"></script>
 <script src="/calendar.js"></script>

@@ -3,6 +3,7 @@
 	const calendarsNode = document.getElementById("calendar-list");
 	const eventsNode = document.getElementById("event-list");
 	const errorNode = document.getElementById("calendar-error");
+	const listError = document.getElementById("calendar-list-error");
 	const groupForm = document.getElementById("calendar-form");
 	const dateForm = document.getElementById("date-form");
 	const activeButton = document.getElementById("active-events");
@@ -104,9 +105,9 @@
 			if (id) {
 				const link = createText("a", name);
 				link.href = `/calendar?calendar_id=${id}`;
-				item.append(link, ` · ${calendar.source_type}`);
+				item.append(link);
 			} else {
-				item.textContent = `${name} · ${calendar.source_type}`;
+				item.textContent = name;
 			}
 			calendarsNode.append(item);
 		}
@@ -240,10 +241,15 @@
 	};
 
 	const showError = (error) => setFeedback(errorNode, describeError(error), true);
+	const showListError = (error) => setFeedback(listError, describeError(error), true);
+	const schedule = window.initSchedule({ getJson, describeError });
 
 	groupForm.addEventListener("submit", async (event) => {
 		event.preventDefault();
-		setFeedback(errorNode, "");
+		const button = groupForm.querySelector("button");
+		if (button.disabled) return;
+		button.disabled = true;
+		setFeedback(listError, "");
 		const groupName = document.getElementById("group-name");
 		try {
 			await request(calendarsUrl, {
@@ -251,10 +257,11 @@
 				body: { source_type: "ruz", name: groupName.value.trim() }
 			});
 			groupName.value = "";
-			await loadCalendars();
-			await loadEvents();
+			await Promise.all([loadCalendars(), schedule.refresh()]);
 		} catch (error) {
-			showError(error);
+			showListError(error);
+		} finally {
+			button.disabled = false;
 		}
 	});
 
@@ -280,10 +287,10 @@
 	const today = new Date();
 	document.getElementById("date-from").value = localDate(today);
 	document.getElementById("date-to").value = localDate(today);
-	loadCalendars().catch(showError);
-	loadEvents().catch(showError);
+	loadCalendars().catch(showListError);
 	const initialId = new URLSearchParams(location.search).get("calendar_id");
 	if (initialId !== null) {
+		document.getElementById("calendar-tools").open = true;
 		calendarIdInput.value = initialId;
 		openCalendar(initialId);
 	}

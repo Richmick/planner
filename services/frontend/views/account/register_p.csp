@@ -11,90 +11,48 @@
 
 <head>
 	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="/common.css">
 	<link rel="stylesheet" href="/account.css">
-	<title>Планер дня</title>
+	<title>Регистрация · Планер</title>
+	<script src="/account.js" defer></script>
 </head>
-<body>
-	<h2>Вход в аккаунт</h2>
-	<form id="register-form" action="/api/profiles/register" method="POST">
-		<input type="hidden" name="sessid" id="sessid" value="<%c++   $$ << sessid;   %>">
-
-		<label>
-			Логин:
-			<input type="text" id="user-login" name="nickname" placeholder="Введите логин" autocomplete="nickname" required />
-		</label>
-		<label>
-			Email:
-			<input id="user-email" type="text" name="email" placeholder="Введите email" autocomplete="email" required />
-		</label>
-
-		<label>
-			Пароль:
-			<input type="password" name="password" minlength="<%c++   $$ << api::pw_min_length;   %>" placeholder="Введите пароль" autocomplete="current-password" required />
-		</label>
-		<label>
-			Повторите пароль:
-			<input type="password" name="password-confirm" minlength="<%c++   $$ << api::pw_min_length;   %>" placeholder="Повторите пароль" autocomplete="current-password" required />
-		</label>
-
-		<button type="submit">Зарегистрироваться</button>
-	</form>
-	<div id="error-place"></div>
-	<div class="links">
-		<a href="/login" id="login-link">Уже есть аккаунт? Войти</a>
-		<a href="/" id="backurl-link">Вернуться</a>
+<body class="auth-page">
+	<div class="auth-header">
+		<a class="brand" href="/"><span class="brand-mark" aria-hidden="true"></span>Планер</a>
+		<a id="backurl-link" class="auth-back" href="/"><span aria-hidden="true">←</span> Назад</a>
 	</div>
 
-	<script src="/common.js"></script>
-	<script>
-		const backurl_unsafe = new URLSearchParams(window.location.search).get('backurl');
-		const backurl = !backurl_unsafe ? "/" : backurl_unsafe;
-		const dict = {
-			MISSING_OBLIGATORY: "Не введены логин, email или пароль",
-			NICKNAME_BUSY: "Логин занят",
-			EMAIL_BUSY: "Email занят",
-			PW_UNSUPPORTED: "Пароль не удалось обработать - попробуйте изменить его как-либо",
-			INTERNAL_ERROR: "Внутренняя ошибка на сервере"
-		};
-		function applyResponse(resp) {
-			if (resp.ok) {
-				let err = document.getElementById("error-place");
-				const msg = "Регистрация прошла успешно - вы будете перенаправлены на страницу входа";
-				if (!err) {
-					alert(msg);
-					window.location.replace("/login");
-				}
-				err.textContent = msg;
-				err.classList.add("feedback");
-				err.classList.remove("error");
-				err.classList.add("success");
-				setTimeout(() => window.location.replace("/login"), 3000);
-				return;
-			}
-			switch (resp.status) {
-				case 419:
-					submitHandler();
-					break;
-				default:
-					resp.json()
-						.then(showError)
-						.catch((e) => setError("Нераспознанная ошибка от сервера (Код " + code + "): " + e + "\nСырая ошибка: " + resp.text()));
-					break;
-			}
-		}
-		function submitHandler(event) {
-			if (event) event.preventDefault();
-			let form = document.getElementById("register-form");
-			fetch(form.action, {
-						method: "POST",
-						headers: { "Content-Type": "application/json" },
-						body: JSON.stringify(Object.fromEntries(new FormData(form)))
-					}).then(applyResponse);
-		}
-		document.getElementById("register-form").addEventListener("submit", submitHandler);
-		document.getElementById("backurl-link").setAttribute("href", backurl);
-		document.getElementById("login-link").setAttribute("href", "/login?backurl=" + backurl);
-	</script>
+	<main class="auth-main">
+		<div class="auth-shell">
+			<div class="auth-preview" aria-hidden="true">
+				<div class="auth-board">
+					<div class="auth-board-top"><i></i><i></i><i></i></div>
+					<div class="auth-board-grid"><i></i><i></i><i></i><i></i><i></i></div>
+				</div>
+			</div>
+			<section class="auth-content" aria-labelledby="auth-title">
+				<h1 id="auth-title">Создать аккаунт</h1>
+				<form id="register-form" class="auth-form" action="/api/profiles/register" method="POST">
+					<input type="hidden" name="sessid" value="<%c++   $$ << sessid;   %>">
+					<label for="user-login">Логин</label>
+					<input type="text" id="user-login" name="nickname" autocomplete="username" required>
+					<label for="user-email">Электронная почта</label>
+					<input id="user-email" type="email" name="email" autocomplete="email" required>
+					<label for="user-password">Пароль</label>
+					<div class="auth-password">
+						<input id="user-password" type="password" name="password" minlength="<%c++   $$ << api::pw_min_length;   %>" autocomplete="new-password" required>
+						<button class="auth-toggle" type="button" aria-controls="user-password password-confirm" aria-pressed="false">Показать</button>
+					</div>
+					<label for="password-confirm">Повторите пароль</label>
+					<input id="password-confirm" type="password" name="password-confirm" minlength="<%c++   $$ << api::pw_min_length;   %>" autocomplete="new-password" required>
+					<button class="auth-submit" type="submit">Зарегистрироваться</button>
+				</form>
+				<p id="error-place" class="auth-feedback" role="status" hidden></p>
+				<p class="auth-switch">Есть аккаунт? <a href="/login" id="login-link">Войти</a></p>
+			</section>
+		</div>
+	</main>
 </body>
 
 </html>

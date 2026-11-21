@@ -1,5 +1,15 @@
 <%layout views/main_layout.csp %>
 
-<h1>Планер-календарь</h1>
-
-<p><a href="/calendar">Открыть календарь</a></p>
+<section class="home-panel">
+	<div class="home-intro">
+		<h1>Планы на день и неделю</h1>
+		<p>Соберите задачи в пуле и перенесите их на удобное время в расписании.</p>
+		<a class="button button-primary" href="/calendar">Открыть расписание <span aria-hidden="true">→</span></a>
+	</div>
+	<div class="home-preview" aria-hidden="true">
+		<div class="home-preview-top"><span></span><span></span><span></span></div>
+		<div class="home-preview-grid">
+			<i></i><i></i><i></i><i></i><i></i>
+		</div>
+	</div>
+</section>
