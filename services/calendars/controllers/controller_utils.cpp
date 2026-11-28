@@ -6,6 +6,7 @@
 namespace api::calendars
 {
 	calendars_ctrl::responses::responses():
+		k204_access_granted(api::response::new_response(drogon::k204NoContent)),
 		k400_invalid_body(api::response::new_400("INVALID_BODY", "Expected a JSON object")),
 		k400_invalid_source_type(api::response::new_400("INVALID_SOURCE_TYPE",
 				"Source type must contain 1 to 7 letters, digits, underscores or hyphens")),
@@ -15,8 +16,15 @@ namespace api::calendars
 				"External calendar ID must be a nonempty string of at most 255 characters")),
 		k400_invalid_dates(api::response::new_400("INVALID_DATES",
 				"Supply dates in YYYY-MM-DD format with from on or before to")),
+		k400_invalid_calendar_id(api::response::new_400("INVALID_CALENDAR_ID", "Calendar ID must be a positive integer")),
+		k400_invalid_user_id(api::response::new_400("INVALID_USER_ID", "User ID must be a positive integer")),
+		k400_invalid_access(api::response::new_400("INVALID_ACCESS", "Access must be r, w or s")),
+		k400_invalid_access_event(api::response::new_400("INVALID_ACCESS_EVENT", "Expected an access-request event")),
 		k401_unauthorized(api::response::new_401_unauthorized()),
+		k403_forbidden(api::response::new_403_forbidden()),
 		k404_not_found(api::response::new_404_not_found()),
+		k409_access_already_granted(api::response::new_error(drogon::k409Conflict,
+				"ACCESS_ALREADY_GRANTED", "You already have the requested access")),
 		k500_database_error(api::response::new_error(drogon::k500InternalServerError,
 				"DB_ERROR", "Internal database error")),
 		k502_source_error(api::response::new_error(drogon::k502BadGateway,
@@ -34,6 +42,14 @@ namespace api::calendars
 		return id;
 	}
 
+	std::int64_t calendars_ctrl::parse_json_id(const Json::Value& value)
+	{
+		if (value.isString()) return parse_id(value.asString());
+		if ((value.type() != Json::intValue && value.type() != Json::uintValue) || !value.isInt64()) return -1;
+		const std::int64_t id = value.asInt64();
+		return id > 0 ? id : -1;
+	}
+
 	bool calendars_ctrl::valid_source_type(std::string_view value)
 	{
 		constexpr std::string_view characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-";
@@ -49,6 +65,25 @@ namespace api::calendars
 		Json::Value result;
 		if (!Json::parseFromStream(Json::CharReaderBuilder{}, input, &result, nullptr)) return Json::Value(value);
 		return result;
+	}
+
+	std::string_view calendars_ctrl::calendar_created_at_sql(bool postgresql)
+	{
+		return postgresql
+				? "to_char(c.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"')"
+				: "strftime('%Y-%m-%dT%H:%M:%fZ', c.created_at)";
+	}
+
+	Json::Value calendars_ctrl::calendar_json(const drogon::orm::Row& row)
+	{
+		Json::Value calendar;
+		calendar["calendar_id"] = row["id"].as< std::int64_t >();
+		calendar["source_type"] = row["type_id"].as< std::string >();
+		calendar["external_id"] = row["external_id"].as< std::string >();
+		calendar["metadata"] = field_json(row, "metadata");
+		calendar["created_at"] = row["created_at"].as< std::string >();
+		calendar["visibility"] = row["visibility"].as< std::string >();
+		return calendar;
 	}
 
 	api::response_t calendars_ctrl::database_error(const drogon::orm::DrogonDbException& error) const

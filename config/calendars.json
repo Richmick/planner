@@ -75,6 +75,10 @@
 	],
 	"custom_config":
 	{
+		"notifier":
+		{
+			"address": ""
+		},
 		"sources":
 		{
 			"ruz":

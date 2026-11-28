@@ -1,5 +1,6 @@
 #include "calendars_ctrl.hpp"
 
+#include "calendar_read_access.hpp"
 #include "database_utils.hpp"
 
 #include <algorithm>
@@ -46,8 +47,9 @@ namespace api::calendars
 					" FROM events e JOIN calendars c ON c.id = e.calendar_id"
 					" JOIN subscriptions s ON s.calendar_id = e.calendar_id"
 					" LEFT JOIN event_overrides o ON o.event_id = e.id AND o.user_id = s.user_id"
-					" WHERE s.user_id = ?"
-					") SELECT * FROM visible_events";
+					" WHERE s.user_id = ?";
+			sql += subscribed_calendar_read_access;
+			sql += ") SELECT * FROM visible_events";
 			const bool postgres = db::is_postgresql();
 			if (active_only)
 			{

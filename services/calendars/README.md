@@ -44,7 +44,14 @@ In the runtime `config/calendars.json`, comment out the SQLite `rdbms` and `file
 - `calendars.owner_id` identifies the owner. Private and protected calendars require one. Existing calendars remain public with no owner assigned.
 - `calendar_access` stores one grant per protected calendar and user. `r` is read, `w` includes editing, and `s` includes managing grants. Ownership comes from `owner_id`. Changing a protected calendar to a different visibility clears its grants.
 
-Subscriptions still store which calendars a user follows. The current API reads subscriptions without evaluating visibility or grants, so enabling restricted calendars for users depends on the backend access checks.
+The gateway supplies the authenticated account in `user-id`. Read and grant requests use that account.
+
+- `GET /api/calendars/calendars/{id}` returns a calendar the caller can read. A missing or inaccessible private calendar returns 404. A protected calendar without a grant returns 403.
+- `GET /api/calendars/calendars`, `GET /api/calendars/events` and `GET /api/calendars/events/active` filter existing subscriptions by the caller's current access.
+- `POST /api/calendars/calendars/{id}/access` accepts `{"user_id":42,"access":"r"}` from the owner or a supervisor of a protected calendar. A successful grant subscribes the recipient and returns 204.
+- `POST /api/notifier/events` accepts `{"calendar_id":102,"user_id":42,"event":"access-request","access":"r"}`. The gateway routes this request through Calendars, which verifies the caller and checks the calendar before forwarding the JSON. A requester with sufficient access already gets 409.
+
+Set `custom_config.notifier.address` in the Calendars config to the notifier's HTTP(S) origin, for example `http://127.0.0.1:5704`. Calendars posts to `/api/notifier/events` on that origin. A successful upstream response produces 202. An empty address produces 421, a failed send produces 502, and a timeout produces 504.
 
 ## RUZ
 

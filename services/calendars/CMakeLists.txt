@@ -45,6 +45,8 @@ target_sources("${PROJECT_NAME}" PRIVATE
 	"controllers/calendars_ctrl.cpp"
 	"controllers/calendar_sources.cpp"
 	"controllers/calendar_events.cpp"
+	"controllers/calendar_access.cpp"
+	"controllers/calendar_notifications.cpp"
 	"controllers/controller_utils.cpp"
 	"scheduler/ruz_scheduler.cpp"
 	"scheduler/ruz_client.cpp"
