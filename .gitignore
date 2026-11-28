@@ -21,3 +21,14 @@ build/
 *.key
 *.cert
 *.crt
+
+# Local calendar databases and configs
+/db/
+/config/calendars.docker.json
+/config/calendars.local.json
+/config/calendars.sqlite.json
+
+# Calendar drafts
+/services/calendars/controllers/controller_utils.hpp
+/services/calendars/ruz/
+/services/frontend/static/calendar.css

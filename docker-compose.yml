@@ -1,8 +1,27 @@
 services:
+  postgres:
+    image: postgres:18-alpine
+    profiles: ["postgres"]
+    environment:
+      POSTGRES_DB: calendars
+      POSTGRES_USER: calendars
+      POSTGRES_PASSWORD: calendars
+      TZ: UTC
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U calendars -d calendars"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - "calendars-postgres:/var/lib/postgresql"
+      - "./services/calendars/sql/001_schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro"
+
   planner:
-    image: drogonframework/drogon
+    build: "./docker"
     tty: true
     working_dir: /app/build
+    environment:
+      TZ: UTC
     ports:
       - "443:443"
     volumes:
@@ -11,5 +30,9 @@ services:
       - "./services:/app/services"
       - "./external:/app/external"
       - "./common:/app/common"
+      - "./cmake:/app/cmake"
       - "./CMakeLists.txt:/app/CMakeLists.txt"
       - "./start-builded.sh:/app/start-builded.sh"
+
+volumes:
+  calendars-postgres:

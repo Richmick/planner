@@ -1,8 +1,8 @@
-﻿{
+{
 	"listeners":
 	[
 		{
-			"address": "localhost",
+			"address": "127.0.0.1",
 			"port": 5702
 		}
 	],
@@ -11,11 +11,17 @@
 		{
 			"name": "default",
 			"rdbms": "sqlite3",
-			"filename":"./calendar.sqlite",
-			"dbname": "calendar",
-			"client_encoding": "",
+			//"rdbms": "postgresql",
+			"filename": "./db/calendars.sqlite",
+			//"host": "postgres",
+			//"port": 5432,
+			//"dbname": "calendars",
+			//"user": "calendars",
+			//"passwd": "calendars",
+			//"client_encoding": "UTF8",
+			"initialization_queries": ["PRAGMA foreign_keys = ON"],
 			"number_of_connections": 1,
-			"timeout": -1.0
+			"timeout": 10.0
 		}
 	],
 	"app":
@@ -51,6 +57,45 @@
 		"enabled_compressed_request": false,
 		"enable_request_stream": false
 	},
-	"plugins": [],
-	"custom_config": {}
+	"plugins":
+	[
+		{
+			"name": "api::calendars::ruz::scheduler",
+			"dependencies": [],
+			"config": {}
+		},
+		{
+			"name": "api::calendars::outbox_relay",
+			"dependencies": [],
+			"config":
+			{
+				"retry_minutes": 5
+			}
+		}
+	],
+	"custom_config":
+	{
+		"notifier":
+		{
+			"address": ""
+		},
+		"sources":
+		{
+			"ruz":
+			{
+				"base_url": "https://ruz.spbstu.ru",
+				"timezone": "Europe/Moscow",
+				"sync":
+				{
+					"static": [5, 18],
+					"pre_lesson": [0.5]
+				},
+				"min_request_interval_seconds": 1,
+				"request_timeout_seconds": 10,
+				"retry_interval_seconds": 30,
+				"sync_on_startup": true,
+				"sync_days": 7
+			}
+		}
+	}
 }

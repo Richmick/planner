@@ -60,7 +60,7 @@ git submodule update --init --recursive
 ```
 Generate ssl certificates (openssl will request some data from stdin):
 ```shell
-docker compose up -d
+docker compose up -d --build
 docker compose exec -w /app/.ssl planner openssl req -x509 -newkey rsa:4096 -keyout gateway.key -out gateway.cert.pem -days 365 -nodes
 exit
 ```
@@ -92,6 +92,8 @@ Run all services inside docker:
 ```shell
 ../start-builded.sh
 ```
+
+The calendars service uses SQLite by default. See the [calendars setup guide](services/calendars/README.md) for PostgreSQL startup and RUZ settings.
 
 > [!NOTE]
 > Containers use ports in exclusive mode. Thus you cannot run docker and executable on host system at the same time

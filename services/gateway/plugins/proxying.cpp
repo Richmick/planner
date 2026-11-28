@@ -122,15 +122,16 @@ void api::gateway::proxy_plugin::pre_route(const drogon::HttpRequestPtr& req,
 		immediate_response(resp.k401_unauthorized);
 		return;
 	}
-	std::string content = req->getHeader("Content-Type");
+	const std::string content_type = req->getHeader("Content-Type");
 	req->clearHeaders();
-	req->addHeader("Content-Type", content);
+	if (!content_type.empty()) req->setContentTypeString(content_type);
 	req->addHeader("user-id", std::to_string(user->id));
 	req->addHeader("user-name", user->name);
 
 	if (subpath.starts_with("/users/"))
 		users.redirect(req, std::move(immediate_response));
-	else if (subpath.starts_with("/calendars/"))
+	else if (subpath.starts_with("/calendars/")
+				|| (subpath == "/notifier/events" && req->method() == drogon::Post))
 		calendars.redirect(req, std::move(immediate_response));
 	else if (subpath.starts_with("/scheduler/"))
 		scheduler.redirect(req, std::move(immediate_response));
@@ -156,7 +157,7 @@ void api::gateway::proxy_plugin::login_callback::operator()(drogon::ReqResult re
 		{
 			std::optional user = resp->as< std::optional< profile > >();
 			if (!user) return callback(responses::instance().k500_internal);
-			session->modify([&user](auto map){ map["profile"] = user; });
+			session->modify([&user](auto& map) { map["profile"] = std::move(*user); });
 		}
 		resp->setPassThrough(true);
 		callback(resp);

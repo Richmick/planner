@@ -30,11 +30,11 @@ add_subdirectory(common)
 add_subdirectory(services/gateway)
 add_subdirectory(services/frontend)
 add_subdirectory(services/users)
-#add_subdirectory(services/calendars)
+add_subdirectory(services/calendars)
 
 add_custom_target("build-all" DEPENDS
 	planner-gateway
 	planner-frontend
 	planner-users
-	#planner-calendars
+	planner-calendars
 )
