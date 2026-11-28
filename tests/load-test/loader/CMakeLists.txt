@@ -38,9 +38,16 @@ target_include_directories("${PROJECT_NAME}" PRIVATE
 target_link_libraries("${PROJECT_NAME}" PRIVATE Drogon::Drogon)
 target_sources("${PROJECT_NAME}" PRIVATE
 	"main.cpp"
-	"plugins/ddos.cpp"
-	"plugins/ddos_config_parse.cpp"
+	"plugins/ddos/lifecycle.cpp"
+	"plugins/ddos/config_parse.cpp"
+	"plugins/ddos/statistics.cpp"
+	"plugins/ddos/statistics_io.cpp"
+	"plugins/ddos/requests.cpp"
+	"plugins/ddos/area.hpp"
+	"plugins/ddos/statistics.hpp"
 	"plugins/ddos.hpp"
+	"controllers/monitor.cpp"
+	"controllers/monitor.hpp"
 )
 
 # Dependencies copying

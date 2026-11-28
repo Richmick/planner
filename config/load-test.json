@@ -1,7 +1,14 @@
 {
+	"listeners":
+	[
+		{
+			"address": "localhost",
+			"port": 80
+		}
+	],
 	"app":
 	{
-		"number_of_threads": 8,
+		"number_of_threads": 4,
 		"log":
 		{
 			"use_spdlog": false,
@@ -25,18 +32,45 @@
 		{
 			"name": "tests::load::ddos_plugin",
 			"dependencies": [],
-			"config": {
+			"config":
+			{
 				"gateway": "https://127.0.0.1",
-				"query_density": // or "query_density": 1.0 (=> global)
+				"pools":
 				{
-					"type": "user", // global, thread, user
-					"value": 4
+					"auth":
+					{
+						"max_queries": 1000,
+						"retries": 2,
+						"timeout": 10,
+						"QOS_groups": [0.5, 1, 2, 5]
+					},
+					"sched":
+					{
+						"query_density": // or "query_density": 1.0 (=> global)
+						{
+							"type": "user", // global, thread, user
+							"value": 4
+						},
+						"timeout": 5,
+						"max_queries": 10000,
+						"QOS_groups": [0.1, 0.3, 0.6, 1, 2.5]
+					}
 				},
-				"max_queries": 10000,
-				"stdout_log_delay": 1,
-				"users_per_thread": 20,
-				"timeout": 5,
-				"start_diffussion": 10
+				"log_files":
+				{
+					"users": "./logs/users",
+					"users_access": "./logs/users-access",
+					"gateway": "./logs/gateway",
+					"gateway_access": "./logs/gateway-access",
+					"sched": ["./logs/scheduler"],
+					"sched_access": ["./logs/scheduler-access"]
+				},
+				"logins": "./test/data/logins.txt",
+				"frame_delay": 1,
+				"users_per_thread": 10,
+				"start_max_thread_auth_queue": 1,
+				"retry_429_timeout": 5, // default
+				"scheme": "sequence" // sequence, mixed
 			}
 		}
 	]

@@ -109,8 +109,10 @@ drogon::Task<> api::users::ctrl::profiles::create_one(api::request_t req, api::r
 		std::string_view err = e.what();
 		if (err.contains("email"))
 		{
+			LOG_INFO << "Email is busy" << body->email;
 			co_return callback(resp.k400_email_busy);
 		}
+		LOG_INFO << "Nickname is busy \"" << body->nickname;
 		co_return callback(resp.k400_nickname_busy);
 	}
 	catch (const drogon::orm::DrogonDbException& e)
